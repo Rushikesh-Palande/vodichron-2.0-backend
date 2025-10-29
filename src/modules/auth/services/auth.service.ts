@@ -1,6 +1,7 @@
 import { logger } from '../../../utils/logger';
 import { comparePasswords } from '../helpers/compare-passwords';
 import { generateToken } from '../helpers/generate-token';
+import { ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_MAX_AGE_MS } from '../constants/auth.constants';
 import { generateRefreshToken } from '../helpers/generate-refresh-token';
 import { getClientMetadata } from '../helpers/get-client-metadata';
 import { getRefreshCookieOptions } from '../helpers/get-cookie-options';
@@ -47,10 +48,8 @@ export async function handleLogin(req: any, res: any) {
     });
   }
 
-  logger.info('🔐 Login attempt', { type: 'AUTH_LOGIN_ATTEMPT', username });
+    logger.info('🔐 Login attempt', { type: 'AUTH_LOGIN_ATTEMPT', username });
   const { ip, userAgent } = getClientMetadata(req.headers, req.ip);
-  const REFRESH_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-  const ACCESS_EXPIRES_IN = '30m'; // Match old vodichron session duration
 
   // Employee path
   const employee = await findEmployeeByOfficialEmail(username);
@@ -73,9 +72,9 @@ export async function handleLogin(req: any, res: any) {
     const accessToken = generateToken({ uuid: user.uuid, role: user.role, email: employee.officialEmailId || undefined, type: 'employee' });
     const { token: refreshToken, hash } = generateRefreshToken();
     // Store employee.uuid as session subjectId (NOT user.uuid) to align with OnlineStatus FK
-    await createSession({ subjectId: employee.uuid, subjectType: 'employee', tokenHash: hash, userAgent, ipAddress: ip, expiresAt: new Date(Date.now() + REFRESH_MAX_AGE_MS) });
+    await createSession({ subjectId: employee.uuid, subjectType: 'employee', tokenHash: hash, userAgent, ipAddress: ip, expiresAt: new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS) });
 
-    res.cookie('refreshToken', refreshToken, getRefreshCookieOptions(REFRESH_MAX_AGE_MS));
+    res.cookie('refreshToken', refreshToken, getRefreshCookieOptions(REFRESH_TOKEN_MAX_AGE_MS));
     logger.info('✅ Employee login successful', { type: 'AUTH_LOGIN_EMPLOYEE', employeeId: employee.uuid, userUuid: user.uuid });
     return res.status(200).json({
       success: true,
@@ -83,7 +82,7 @@ export async function handleLogin(req: any, res: any) {
       data: {
         token: accessToken,
         tokenType: 'Bearer',
-        expiresIn: ACCESS_EXPIRES_IN,
+        expiresIn: ACCESS_TOKEN_EXPIRES_IN,
         subject: { id: user.uuid, type: 'employee', role: user.role, email: employee.officialEmailId || null },
       },
       timestamp: new Date().toISOString(),
@@ -109,9 +108,9 @@ export async function handleLogin(req: any, res: any) {
 
     const accessToken = generateToken({ uuid: customer.uuid, role: 'customer', email: customer.email, type: 'customer' });
     const { token: refreshToken, hash } = generateRefreshToken();
-    await createSession({ subjectId: customer.uuid, subjectType: 'customer', tokenHash: hash, userAgent, ipAddress: ip, expiresAt: new Date(Date.now() + REFRESH_MAX_AGE_MS) });
+    await createSession({ subjectId: customer.uuid, subjectType: 'customer', tokenHash: hash, userAgent, ipAddress: ip, expiresAt: new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS) });
 
-    res.cookie('refreshToken', refreshToken, getRefreshCookieOptions(REFRESH_MAX_AGE_MS));
+    res.cookie('refreshToken', refreshToken, getRefreshCookieOptions(REFRESH_TOKEN_MAX_AGE_MS));
     logger.info('✅ Customer login successful', { type: 'AUTH_LOGIN_CUSTOMER', customerId: customer.uuid });
     return res.status(200).json({
       success: true,
@@ -119,7 +118,7 @@ export async function handleLogin(req: any, res: any) {
       data: {
         token: accessToken,
         tokenType: 'Bearer',
-        expiresIn: ACCESS_EXPIRES_IN,
+        expiresIn: ACCESS_TOKEN_EXPIRES_IN,
         subject: { id: customer.uuid, type: 'customer', role: 'customer', email: customer.email },
       },
       timestamp: new Date().toISOString(),
@@ -171,9 +170,9 @@ export async function handleExtendSession(req: any, res: any) {
     const user = await findUserByEmployeeUuid(session.subjectId);
     const accessToken = generateToken({ uuid: user?.uuid || session.subjectId, role: (user?.role as any) || 'employee', type: 'employee' });
     const { token: newRefresh, hash } = generateRefreshToken();
-    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const newExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
     await updateSessionToken(tokenHash, hash, newExpiry);
-    res.cookie('refreshToken', newRefresh, getRefreshCookieOptions(7 * 24 * 60 * 60 * 1000));
+    res.cookie('refreshToken', newRefresh, getRefreshCookieOptions(REFRESH_TOKEN_MAX_AGE_MS));
     logger.info('✅ Session extended (employee)', { type: 'AUTH_EXTEND_SUCCESS', subjectId: session.subjectId });
     return res.status(200).json({
       success: true,
@@ -185,9 +184,9 @@ export async function handleExtendSession(req: any, res: any) {
     logger.debug('🔁 Extending customer session', { subjectId: session.subjectId, type: 'AUTH_EXTEND_FLOW' });
     const accessToken = generateToken({ uuid: session.subjectId, role: 'customer', type: 'customer' });
     const { token: newRefresh, hash } = generateRefreshToken();
-    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const newExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
     await updateSessionToken(tokenHash, hash, newExpiry);
-    res.cookie('refreshToken', newRefresh, getRefreshCookieOptions(7 * 24 * 60 * 60 * 1000));
+    res.cookie('refreshToken', newRefresh, getRefreshCookieOptions(REFRESH_TOKEN_MAX_AGE_MS));
     logger.info('✅ Session extended (customer)', { type: 'AUTH_EXTEND_SUCCESS', subjectId: session.subjectId });
     return res.status(200).json({
       success: true,

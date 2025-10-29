@@ -56,6 +56,11 @@ export interface ApiConfig {
   version: string;
 }
 
+export interface JwtConfig {
+  accessTokenExpiresIn: string;      // e.g., '30m', '1h', '2h'
+  refreshTokenMaxAgeMs: number;      // in milliseconds (e.g., 7 days)
+}
+
 export interface DatabaseConfig {
   host: string;
   port: number;
@@ -80,5 +85,6 @@ export interface AppConfig {
   cors: CorsConfig;
   logging: LoggingConfig;
   api: ApiConfig;
+  jwt: JwtConfig;
   db: DatabaseConfig;
 }

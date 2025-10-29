@@ -109,6 +109,14 @@ export const config: AppConfig = {
     version: getEnvVariable('API_VERSION', false, 'v1'),     // API version
   },
 
+  // JWT Configuration
+  // -----------------
+  // JSON Web Token settings for authentication
+  jwt: {
+    accessTokenExpiresIn: getEnvVariable('JWT_ACCESS_TOKEN_EXPIRES_IN', false, '30m'),        // Access token expiry (e.g., '30m', '1h')
+    refreshTokenMaxAgeMs: getEnvNumber('JWT_REFRESH_TOKEN_MAX_AGE_MS', 7 * 24 * 60 * 60 * 1000, 60000, 30 * 24 * 60 * 60 * 1000),  // Refresh token max age in milliseconds (default: 7 days)
+  },
+
   // Database Configuration
   // ---------------------
   // MySQL database connection settings with connection pooling
