@@ -297,3 +297,151 @@ export async function checkIfEmployeeMappedToCustomer(
     return false;
   }
 }
+
+/**
+ * Get Paginated Employees
+ * =======================
+ * 
+ * Fetches a paginated list of employees with optional filters.
+ * Used for employee list/directory views.
+ * 
+ * Filters:
+ * - designation: Filter by job designation
+ * - department: Filter by department
+ * - reportingManagerId + reportingManagerRole: Filter by reporting manager or director
+ * 
+ * Pagination:
+ * - page: Page number (1-indexed)
+ * - pageLimit: Number of records per page
+ * 
+ * @param loggedInUserUuid - UUID of logged-in user (excluded from results)
+ * @param filters - Filter criteria (designation, department, manager)
+ * @param page - Page number (1-indexed)
+ * @param pageLimit - Number of records per page
+ * @returns Array of employees with online status
+ */
+export async function getPaginatedEmployees(
+  loggedInUserUuid: string,
+  filters?: {
+    designation?: string;
+    department?: string;
+    reportingManagerId?: string;
+    reportingManagerRole?: string;
+  },
+  page?: number,
+  pageLimit?: number
+): Promise<any[]> {
+  const timer = new PerformanceTimer('getPaginatedEmployees');
+  
+  try {
+    logger.debug('📊 Fetching paginated employees', {
+      loggedInUserUuid,
+      filters,
+      page,
+      pageLimit,
+      operation: 'getPaginatedEmployees'
+    });
+
+    // ==========================================================================
+    // STEP 1: Build Filter Clauses
+    // ==========================================================================
+    const queryParams: any[] = [loggedInUserUuid];
+    const filterClauses: string[] = [];
+
+    if (filters?.designation) {
+      filterClauses.push(`employees.designation = ?`);
+      queryParams.push(filters.designation);
+    }
+
+    if (filters?.department) {
+      filterClauses.push(`employees.department = ?`);
+      queryParams.push(filters.department);
+    }
+
+    if (filters?.reportingManagerId && filters?.reportingManagerRole) {
+      if (filters.reportingManagerRole === 'director') {
+        filterClauses.push(`employees.reportingDirectorId = ?`);
+        queryParams.push(filters.reportingManagerId);
+      } else if (filters.reportingManagerRole === 'manager') {
+        filterClauses.push(`employees.reportingManagerId = ?`);
+        queryParams.push(filters.reportingManagerId);
+      }
+    }
+
+    // ==========================================================================
+    // STEP 2: Build WHERE Clause
+    // ==========================================================================
+    const whereClause = `WHERE employees.uuid != ? ${
+      filterClauses.length > 0 ? `AND ${filterClauses.join(' AND ')}` : ''
+    }`;
+
+    // ==========================================================================
+    // STEP 3: Build Pagination
+    // ==========================================================================
+    let limitClause = '';
+    if (page && pageLimit) {
+      const offset = (page - 1) * pageLimit;
+      limitClause = `LIMIT ? OFFSET ?`;
+      queryParams.push(pageLimit, offset);
+    }
+
+    // ==========================================================================
+    // STEP 4: Execute Query
+    // ==========================================================================
+    const sql = `
+      SELECT 
+        employees.*,
+        CASE
+          WHEN online_status.onlineStatus IS NOT NULL THEN online_status.onlineStatus
+          ELSE 'OFFLINE'
+        END AS onlineStatus
+      FROM employees 
+        LEFT JOIN employee_online_status as online_status ON online_status.employeeId = employees.uuid
+      ${whereClause}
+      ORDER BY employees.name ASC
+      ${limitClause}
+    `;
+
+    const result = await sequelize.query<any>(sql, {
+      replacements: queryParams,
+      type: QueryTypes.SELECT,
+      raw: true,
+    });
+
+    // ==========================================================================
+    // STEP 5: Log and Return
+    // ==========================================================================
+    const duration = timer.end();
+    
+    logDatabase('SELECT_EMPLOYEES_PAGINATED', loggedInUserUuid, duration);
+    
+    if (duration > 200) {
+      logPerformance('SLOW_EMPLOYEES_LIST_QUERY', duration, {
+        resultCount: result.length,
+        page,
+        pageLimit
+      }, 200);
+    }
+
+    logger.debug('✅ Employees fetched successfully', {
+      count: result.length,
+      page,
+      pageLimit,
+      duration: `${duration}ms`
+    });
+
+    return result;
+
+  } catch (error: any) {
+    const duration = timer.end();
+    
+    logDatabase('SELECT_EMPLOYEES_ERROR', loggedInUserUuid, duration, error);
+    
+    logger.error('❌ Failed to fetch employees from database', {
+      error: error.message,
+      duration: `${duration}ms`
+    });
+
+    throw new Error(`Database error while fetching employees: ${error.message}`);
+  }
+}

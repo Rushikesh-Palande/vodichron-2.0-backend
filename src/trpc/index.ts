@@ -1,6 +1,6 @@
 import { router } from './trpc';
 import { authRouter } from '../modules/auth/trpc';
-import { employeeRouter } from '../modules/employee/trpc/employee.router';
+import { employeeRouter } from '../modules/employee/trpc';
 
 /**
 | * App Router (tRPC)

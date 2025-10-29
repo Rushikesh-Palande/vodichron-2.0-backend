@@ -27,8 +27,12 @@ import authRoutes from '../modules/auth/routes/auth.routes';
 router.use('/api/auth', authRoutes);
 logger.debug('  📍 Mounted: /api/auth → authRoutes');
 
+// Employee routes
+import employeeRoutes from '../modules/employee/routes/employee.routes';
+router.use('/api/employees', employeeRoutes);
+logger.debug('  📍 Mounted: /api/employees → employeeRoutes');
+
 // TODO: Add more routes here as they are implemented
-// router.use('/api/employees', employeeRoutes);
 // router.use('/api/leaves', leaveRoutes);
 // router.use('/api/timesheets', timesheetRoutes);
 // etc.

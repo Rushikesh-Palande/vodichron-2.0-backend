@@ -1,0 +1,153 @@
+import { Router } from 'express';
+import { logger } from '../../../utils/logger';
+import { getEmployeeByIdExpressController } from '../controllers/get-by-id.controller';
+import { getEmployeesListExpressController } from '../controllers/list.controller';
+
+/**
+ * Employee Routes for Vodichron HRMS
+ * ==================================
+ * RESTful API routes for employee management operations.
+ * 
+ * Note: This is for Express REST API routes.
+ * tRPC routes are defined separately in trpc/routers/
+ * 
+ * Based on old vodichron employeeRoutes.ts
+ */
+const router = Router();
+
+// Log route registration start
+logger.info('👥 Initializing employee routes...');
+
+/**
+ * GET /:id
+ * --------
+ * Fetches employee profile by UUID with authorization checks
+ * 
+ * Authorization:
+ * - ALL_USERS (with role-based filtering in controller)
+ * 
+ * Old route: GET /employee/:id
+ */
+router.get('/:id', getEmployeeByIdExpressController);
+logger.info('✅ Employee route registered: GET /employees/:id');
+
+/**
+ * POST /list
+ * ----------
+ * Get paginated list of employees
+ * 
+ * Authorization:
+ * - ADMIN_USERS, directors, managers
+ * 
+ * Old route: POST /employee/list
+ */
+router.post('/list', getEmployeesListExpressController);
+logger.info('✅ Employee route registered: POST /employees/list');
+
+/**
+ * POST /register
+ * --------------
+ * Create new employee profile
+ * 
+ * Authorization:
+ * - ADMIN_USERS only
+ * 
+ * Old route: POST /employee/register
+ */
+// TODO: Implement when needed
+
+/**
+ * PATCH /update
+ * -------------
+ * Update employee profile
+ * 
+ * Authorization:
+ * - ORG_USERS (self + admins/HR)
+ * 
+ * Old route: PATCH /employee/update
+ */
+// TODO: Implement when needed
+
+/**
+ * DELETE /:id
+ * -----------
+ * Delete employee profile
+ * 
+ * Authorization:
+ * - SUPER_USERS only
+ * 
+ * Old route: DELETE /employee/:id
+ */
+// TODO: Implement when needed
+
+/**
+ * GET /search/:keyword
+ * -------------------
+ * Search employees by keyword
+ * 
+ * Authorization:
+ * - ADMIN_USERS
+ * 
+ * Old route: GET /employee/search/list/:keyword
+ */
+// TODO: Implement when needed
+
+/**
+ * GET /status
+ * -----------
+ * Returns employee system status and enabled features
+ */
+router.get('/status', (_req, res) => {
+  logger.info('👥 Employee system status requested');
+  res.status(200).json({
+    success: true,
+    message: 'Employee system status retrieved',
+    data: {
+      status: 'active',
+      endpoints: {
+        getById: '/api/employees/:id',
+        list: '/api/employees/list',
+        create: '/api/employees/register',
+        update: '/api/employees/update',
+        delete: '/api/employees/:id',
+        search: '/api/employees/search/:keyword',
+        status: '/api/employees/status',
+      },
+      features: {
+        profileManagement: true,
+        documentUpload: false, // TODO: Implement
+        photoUpload: false, // TODO: Implement
+        searchFunctionality: false, // TODO: Implement
+        roleBasedAccess: true,
+      },
+      implemented: {
+        getById: true, // Available via both REST and tRPC
+        list: true, // Available via both REST and tRPC
+        create: false,
+        update: false,
+        delete: false,
+        search: false,
+      },
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+logger.info('✅ Employee status route registered: GET /employees/status');
+
+// TODO: Add more routes here as controllers are implemented
+// Following the pattern from old vodichron:
+// - POST /exists - Check if employee email exists
+// - GET /search/role-assignment/list/:keyword
+// - GET /search/manager-assignment/list/:keyword
+// - GET /search/leave-approver/list/:keyword
+// - POST /photo/upload
+// - GET /image/:id
+// - DELETE /image/:id
+// - POST /document/upload
+// - GET /documents/:id
+// - POST /all/documents
+// - DELETE /document/:empid/:docid
+// - GET /document/download/:empid/:docid
+// - PATCH /document/approve/:docid
+
+export default router;
