@@ -51,7 +51,7 @@ export interface JwtUserPayload {
  * ---------------------
  * Creates a signed JWT with an expiration window.
  */
-export function generateToken(payload: JwtUserPayload, expiresIn: SignOptions['expiresIn'] = ACCESS_TOKEN_EXPIRES_IN): string {
+export function generateToken(payload: JwtUserPayload, expiresIn: SignOptions['expiresIn'] = ACCESS_TOKEN_EXPIRES_IN as SignOptions['expiresIn']): string {
   const secret: Secret = config.security.sessionSecret as unknown as Secret;
   const token = sign({ user: payload }, secret, { expiresIn });
   logger.debug('🔐 Access token generated', {
