@@ -5,6 +5,7 @@ import { getEmployeeByIdExpressController } from '../controllers/crud/get-by-id.
 import { getEmployeesListExpressController } from '../controllers/crud/list.controller';
 import { createEmployeeExpressController } from '../controllers/crud/create.controller';
 import { checkEmployeeExistExpressController } from '../controllers/crud/check-employee-exist.controller';
+import { updateEmployeeExpressController } from '../controllers/crud/update.controller';
 
 /**
  * Employee Routes for Vodichron HRMS
@@ -57,7 +58,7 @@ router.get('/status', (_req, res) => {
         list: true, // Available via both REST and tRPC
         create: true, // Available via both REST and tRPC
         checkExists: true, // Available via both REST and tRPC
-        update: false,
+        update: true, // Available via both REST and tRPC
         delete: false,
         search: false,
       },
@@ -126,10 +127,13 @@ logger.info('✅ Employee route registered: POST /employees/exists');
  * 
  * Authorization:
  * - ORG_USERS (self + admins/HR)
+ * - HR/Super users can update any employee and all fields
+ * - Regular employees can only update their own profile (restricted fields)
  * 
  * Old route: PATCH /employee/update
  */
-// TODO: Implement when needed
+router.patch('/update', authenticateJWT, updateEmployeeExpressController);
+logger.info('✅ Employee route registered: PATCH /employees/update');
 
 /**
  * DELETE /:id

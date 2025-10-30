@@ -22,7 +22,7 @@
 
 import { TRPCError } from '@trpc/server';
 import { logger, logSecurity, PerformanceTimer } from '../../../utils/logger';
-import { getEmployeeByUuidWithManagerDetail, checkIfEmployeeMappedToCustomer, getPaginatedEmployees } from '../stores/employee.store';
+import { getEmployeeByUuidWithManagerDetail, checkIfEmployeeMappedToCustomer, getPaginatedEmployees } from '../stores/crud/employee.store';
 import { decryptEmployeeSensitiveFields } from '../helpers/decrypt-employee-sensitive-fields.helper';
 import { EmployeeWithManagerDetail, ApplicationUserRole } from '../types/employee.types';
 

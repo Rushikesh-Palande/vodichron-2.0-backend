@@ -10,7 +10,7 @@
 
 import { Request, Response } from 'express';
 import { logger, logSecurity, PerformanceTimer } from '../../../../utils/logger';
-import { getEmployeeByUuidWithManagerDetail, checkIfEmployeeMappedToCustomer } from '../../stores/employee.store';
+import { getEmployeeByUuidWithManagerDetail, checkIfEmployeeMappedToCustomer } from '../../stores/crud/employee.store';
 import { decryptEmployeeSensitiveFields } from '../../helpers/decrypt-employee-sensitive-fields.helper';
 import { ApplicationUserRole } from '../../types/employee.types';
 

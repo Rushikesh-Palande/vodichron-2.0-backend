@@ -24,9 +24,9 @@
  */
 
 import { QueryTypes } from 'sequelize';
-import { sequelize } from '../../../database';
-import { logger, logDatabase, logPerformance, PerformanceTimer } from '../../../utils/logger';
-import { EmployeeWithManagerDetail } from '../types/employee.types';
+import { sequelize } from '../../../../database';
+import { logger, logDatabase, logPerformance, PerformanceTimer } from '../../../../utils/logger';
+import { EmployeeWithManagerDetail } from '../../types/employee.types';
 
 /**
  * Get Employee By UUID With Manager Detail

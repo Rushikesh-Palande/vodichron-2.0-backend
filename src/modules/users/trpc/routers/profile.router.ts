@@ -8,7 +8,7 @@
 
 import { protectedProcedure } from '../../../../trpc/trpc';
 import { logger } from '../../../../utils/logger';
-import { getEmployeeByUuidWithManagerDetail } from '../../../employee/stores/employee.store';
+import { getEmployeeByUuidWithManagerDetail } from '../../../employee/stores/crud/employee.store';
 import User from '../../../../models/user.model';
 
 /**
