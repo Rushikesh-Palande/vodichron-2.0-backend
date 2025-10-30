@@ -1,0 +1,995 @@
+{
+	"info": {
+		"_postman_id": "vodichron-trpc-collection",
+		"name": "Vodichron HRMS - tRPC API",
+		"description": "Comprehensive tRPC API collection for Vodichron HRMS with success, error, and edge case scenarios.\n\n## Overview\n- Base URL: http://localhost:5000/trpc\n- Authentication: JWT Bearer token (except public endpoints)\n- All requests use POST method with JSON body\n\n## Collections\n1. **Auth Module** - Login, session management, logout\n2. **Employee Module** - CRUD operations, email validation\n3. **User Module** - Profile management\n\n## Variables Required\n- `base_url` - Server base URL (default: http://localhost:5000)\n- `access_token` - JWT access token (auto-set after login)\n- `refresh_token` - Refresh token for session extension\n- `employee_uuid` - Employee UUID for testing",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Auth Module",
+			"item": [
+				{
+					"name": "Login - Success (Employee)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.accessToken).to.exist;",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.result.data.accessToken);",
+									"});",
+									"",
+									"pm.test(\"Response has user data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.user).to.exist;",
+									"    pm.expect(jsonData.result.data.user.uuid).to.exist;",
+									"    pm.collectionVariables.set(\"employee_uuid\", jsonData.result.data.user.uuid);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"0\": {\n    \"input\": {\n      \"email\": \"rushikesh@embedsquare.com\",\n      \"password\": \"Embed@123\",\n      \"userType\": \"employee\"\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/auth.login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"auth.login"
+							]
+						},
+						"description": "**Success Case: Employee Login**\n\nAuthenticates an employee user with valid credentials.\n\n**Test Coverage:**\n- Valid email and password\n- Employee user type\n- Returns access token\n- Returns user profile data\n- Sets refresh token cookie"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Error (Invalid Credentials)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (tRPC wraps errors)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.exist;",
+									"    pm.expect(jsonData.error.data.code).to.equal(\"UNAUTHORIZED\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"email\": \"rushikesh@embedsquare.com\",\n    \"password\": \"WrongPassword123\",\n    \"userType\": \"employee\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/auth.login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"auth.login"
+							]
+						},
+						"description": "**Error Case: Invalid Password**\n\n**Test Coverage:**\n- Invalid password\n- Returns UNAUTHORIZED error\n- No token issued\n- Security logging triggered"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Error (User Not Found)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (tRPC wraps errors)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.exist;",
+									"    pm.expect(jsonData.error.data.code).to.equal(\"NOT_FOUND\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"email\": \"nonexistent@example.com\",\n    \"password\": \"Test@123\",\n    \"userType\": \"employee\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/auth.login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"auth.login"
+							]
+						},
+						"description": "**Error Case: User Not Found**\n\n**Test Coverage:**\n- Non-existent email\n- Returns NOT_FOUND error\n- No credentials exposed in error"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Error (Validation Failed)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (tRPC wraps errors)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has validation error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.exist;",
+									"    pm.expect(jsonData.error.data.code).to.equal(\"BAD_REQUEST\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"email\": \"invalid-email\",\n    \"password\": \"123\",\n    \"userType\": \"employee\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/auth.login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"auth.login"
+							]
+						},
+						"description": "**Error Case: Validation Failed**\n\n**Test Coverage:**\n- Invalid email format\n- Password too short\n- Zod validation error\n- Returns BAD_REQUEST"
+					},
+					"response": []
+				},
+				{
+					"name": "Extend Session - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has new access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.accessToken).to.exist;",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.result.data.accessToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Cookie",
+								"value": "refreshToken={{refresh_token}}",
+								"description": "Refresh token from login"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/auth.extendSession",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"auth.extendSession"
+							]
+						},
+						"description": "**Success Case: Extend Session**\n\n**Prerequisites:**\n- Valid refresh token in cookie\n- Active session\n\n**Test Coverage:**\n- Validates refresh token\n- Issues new access token\n- Rotates refresh token\n- Updates session timestamp"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response indicates success\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/auth.logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"auth.logout"
+							]
+						},
+						"description": "**Success Case: Logout**\n\n**Prerequisites:**\n- Valid access token\n- Active session\n\n**Test Coverage:**\n- Revokes refresh token\n- Clears cookies\n- Updates employee online status\n- Logs security event"
+					},
+					"response": []
+				}
+			],
+			"description": "## Auth Module\n\nAuthentication and session management endpoints.\n\n**Features:**\n- Employee & Customer authentication\n- JWT-based access tokens (15min expiry)\n- Refresh token rotation\n- HTTP-only secure cookies\n- Session tracking\n- Online status management"
+		},
+		{
+			"name": "2. Employee Module",
+			"item": [
+				{
+					"name": "Get Employee By ID - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has employee data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.employee).to.exist;",
+									"    pm.expect(jsonData.result.data.employee.uuid).to.exist;",
+									"    pm.expect(jsonData.result.data.employee.name).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"description": "Required for authentication"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"employeeId\": \"{{employee_uuid}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.getById",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.getById"
+							]
+						},
+						"description": "**Success Case: Get Employee By ID**\n\n**Prerequisites:**\n- Valid access token\n- Valid employee UUID\n\n**Test Coverage:**\n- Fetches complete employee profile\n- Returns manager/director details\n- Decrypts sensitive fields (PAN, Aadhaar, Bank)\n- Role-based authorization applied"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee By ID - Error (Not Found)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (tRPC wraps errors)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has NOT_FOUND error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.exist;",
+									"    pm.expect(jsonData.error.data.code).to.equal(\"NOT_FOUND\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"employeeId\": \"00000000-0000-0000-0000-000000000000\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.getById",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.getById"
+							]
+						},
+						"description": "**Error Case: Employee Not Found**\n\n**Test Coverage:**\n- Non-existent UUID\n- Returns NOT_FOUND error\n- No data leaked"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee By ID - Error (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (tRPC wraps errors)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has UNAUTHORIZED error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.exist;",
+									"    pm.expect(jsonData.error.data.code).to.equal(\"UNAUTHORIZED\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"employeeId\": \"{{employee_uuid}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.getById",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.getById"
+							]
+						},
+						"description": "**Error Case: No Authentication**\n\n**Test Coverage:**\n- Missing JWT token\n- Returns UNAUTHORIZED error\n- Protected endpoint enforced"
+					},
+					"response": []
+				},
+				{
+					"name": "List Employees - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has employees array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.employees).to.be.an('array');",
+									"    pm.expect(jsonData.result.data.pagination).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"pagination\": {\n      \"page\": 1,\n      \"pageLimit\": 10\n    },\n    \"filters\": {}\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.list",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.list"
+							]
+						},
+						"description": "**Success Case: List Employees**\n\n**Prerequisites:**\n- Valid access token\n- Admin/HR/Manager/Director role\n\n**Test Coverage:**\n- Paginated response\n- Filtered by role permissions\n- Decrypted sensitive data\n- Includes manager details"
+					},
+					"response": []
+				},
+				{
+					"name": "List Employees - With Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has filtered employees\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.employees).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"pagination\": {\n      \"page\": 1,\n      \"pageLimit\": 10\n    },\n    \"filters\": {\n      \"department\": \"Development\",\n      \"designation\": \"Software Engineer\"\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.list",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.list"
+							]
+						},
+						"description": "**Success Case: List with Filters**\n\n**Test Coverage:**\n- Department filter\n- Designation filter\n- Combined filters\n- Pagination maintained"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has employee UUID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.employeeUuid).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"name\": \"John Doe\",\n    \"gender\": \"Male\",\n    \"dateOfBirth\": \"1990-01-15\",\n    \"contactNumber\": \"9876543210\",\n    \"personalEmail\": \"johndoe@example.com\",\n    \"employeeId\": \"EMP999\",\n    \"officialEmailId\": \"johndoe@hedsquare.com\",\n    \"dateOfJoining\": \"2024-01-01\",\n    \"reportingManagerId\": \"{{employee_uuid}}\",\n    \"designation\": \"Software Engineer\",\n    \"department\": \"Development\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.create"
+							]
+						},
+						"description": "**Success Case: Create Employee**\n\n**Prerequisites:**\n- Valid access token\n- Super_user/Admin/HR role\n- Unique emails\n\n**Test Coverage:**\n- Creates employee record\n- Encrypts sensitive fields\n- Validates all required fields\n- Returns new employee UUID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee - Error (Duplicate Email)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (tRPC wraps errors)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has BAD_REQUEST error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.exist;",
+									"    pm.expect(jsonData.error.data.code).to.equal(\"BAD_REQUEST\");",
+									"    pm.expect(jsonData.error.message).to.include(\"already exists\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"name\": \"Test User\",\n    \"gender\": \"Male\",\n    \"dateOfBirth\": \"1990-01-15\",\n    \"contactNumber\": \"9876543210\",\n    \"personalEmail\": \"rushikesh@embedsquare.com\",\n    \"employeeId\": \"EMP888\",\n    \"officialEmailId\": \"test@hedsquare.com\",\n    \"dateOfJoining\": \"2024-01-01\",\n    \"reportingManagerId\": \"{{employee_uuid}}\",\n    \"designation\": \"Software Engineer\",\n    \"department\": \"Development\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.create"
+							]
+						},
+						"description": "**Error Case: Duplicate Email**\n\n**Test Coverage:**\n- Personal email already exists\n- Returns BAD_REQUEST\n- Clear error message\n- No partial data created"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee - Error (Forbidden)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (tRPC wraps errors)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has FORBIDDEN error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.exist;",
+									"    pm.expect(jsonData.error.data.code).to.equal(\"FORBIDDEN\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{employee_access_token}}",
+								"description": "Regular employee token (not admin)"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"name\": \"Test User\",\n    \"gender\": \"Male\",\n    \"dateOfBirth\": \"1990-01-15\",\n    \"contactNumber\": \"9876543210\",\n    \"personalEmail\": \"newemployee@example.com\",\n    \"employeeId\": \"EMP777\",\n    \"officialEmailId\": \"newemployee@hedsquare.com\",\n    \"dateOfJoining\": \"2024-01-01\",\n    \"reportingManagerId\": \"{{employee_uuid}}\",\n    \"designation\": \"Software Engineer\",\n    \"department\": \"Development\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.create",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.create"
+							]
+						},
+						"description": "**Error Case: Insufficient Permissions**\n\n**Test Coverage:**\n- Regular employee attempting to create\n- Returns FORBIDDEN\n- Only admin/HR/super_user allowed"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Employee Exist - Success (Exists)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response indicates email exists\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.exists).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"email\": \"rushikesh@embedsquare.com\",\n    \"emailType\": \"personalEmail\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.checkEmployeeExist",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.checkEmployeeExist"
+							]
+						},
+						"description": "**Success Case: Email Exists**\n\n**Prerequisites:**\n- None (public endpoint)\n\n**Test Coverage:**\n- Checks personal email\n- Returns true if exists\n- Used for form validation\n- No authentication required"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Employee Exist - Success (Not Exists)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response indicates email does not exist\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.exists).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"email\": \"nonexistent123456@example.com\",\n    \"emailType\": \"personalEmail\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.checkEmployeeExist",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.checkEmployeeExist"
+							]
+						},
+						"description": "**Success Case: Email Does Not Exist**\n\n**Test Coverage:**\n- New email address\n- Returns false\n- Safe to use for registration"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Employee Exist - Official Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has exists property\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.exists).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"input\": {\n    \"email\": \"rushikesh@embedsquare.com\",\n    \"emailType\": \"officialEmailId\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/employee.checkEmployeeExist",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"employee.checkEmployeeExist"
+							]
+						},
+						"description": "**Success Case: Check Official Email**\n\n**Test Coverage:**\n- Official email validation\n- Different email type parameter\n- Same endpoint, different field"
+					},
+					"response": []
+				}
+			],
+			"description": "## Employee Module\n\nEmployee CRUD operations and email validation.\n\n**Features:**\n- Employee profile management\n- Role-based access control\n- Sensitive data encryption\n- Manager/Director hierarchy\n- Email uniqueness validation\n- Pagination and filtering"
+		},
+		{
+			"name": "3. User Module",
+			"item": [
+				{
+					"name": "Get User Profile - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has user profile\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.result.data.user).to.exist;",
+									"    pm.expect(jsonData.result.data.user.uuid).to.exist;",
+									"    pm.expect(jsonData.result.data.user.role).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/user.profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"user.profile"
+							]
+						},
+						"description": "**Success Case: Get User Profile**\n\n**Prerequisites:**\n- Valid access token\n\n**Test Coverage:**\n- Fetches authenticated user's profile\n- Returns user + employee data\n- No UUID needed in input\n- Uses token context"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Profile - Error (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 (tRPC wraps errors)\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has UNAUTHORIZED error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error).to.exist;",
+									"    pm.expect(jsonData.error.data.code).to.equal(\"UNAUTHORIZED\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/trpc/user.profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"trpc",
+								"user.profile"
+							]
+						},
+						"description": "**Error Case: No Authentication**\n\n**Test Coverage:**\n- Missing JWT token\n- Returns UNAUTHORIZED\n- Protected endpoint"
+					},
+					"response": []
+				}
+			],
+			"description": "## User Module\n\nUser profile and account management.\n\n**Features:**\n- Authenticated user profile\n- Role information\n- Employee association\n- Session context"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "employee_uuid",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "employee_access_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

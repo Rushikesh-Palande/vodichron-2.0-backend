@@ -4,6 +4,7 @@ import { authenticateJWT } from '../../../middleware/auth.middleware';
 import { getEmployeeByIdExpressController } from '../controllers/crud/get-by-id.controller';
 import { getEmployeesListExpressController } from '../controllers/crud/list.controller';
 import { createEmployeeExpressController } from '../controllers/crud/create.controller';
+import { checkEmployeeExistExpressController } from '../controllers/crud/check-employee-exist.controller';
 
 /**
  * Employee Routes for Vodichron HRMS
@@ -19,6 +20,52 @@ const router = Router();
 
 // Log route registration start
 logger.info('👥 Initializing employee routes...');
+
+/**
+ * GET /status
+ * -----------
+ * Returns employee system status and enabled features
+ * IMPORTANT: This route must be defined BEFORE /:id to avoid conflicts
+ */
+router.get('/status', (_req, res) => {
+  logger.info('👥 Employee system status requested');
+  res.status(200).json({
+    success: true,
+    message: 'Employee system status retrieved',
+    data: {
+      status: 'active',
+      endpoints: {
+        getById: '/api/employees/:id',
+        list: '/api/employees/list',
+        create: '/api/employees/register',
+        exists: '/api/employees/exists',
+        update: '/api/employees/update',
+        delete: '/api/employees/:id',
+        search: '/api/employees/search/:keyword',
+        status: '/api/employees/status',
+      },
+      features: {
+        profileManagement: true,
+        emailValidation: true,
+        documentUpload: false, // TODO: Implement
+        photoUpload: false, // TODO: Implement
+        searchFunctionality: false, // TODO: Implement
+        roleBasedAccess: true,
+      },
+      implemented: {
+        getById: true, // Available via both REST and tRPC
+        list: true, // Available via both REST and tRPC
+        create: true, // Available via both REST and tRPC
+        checkExists: true, // Available via both REST and tRPC
+        update: false,
+        delete: false,
+        search: false,
+      },
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+logger.info('✅ Employee status route registered: GET /employees/status');
 
 /**
  * GET /:id
@@ -60,6 +107,19 @@ router.post('/register', authenticateJWT, createEmployeeExpressController);
 logger.info('✅ Employee route registered: POST /employees/register');
 
 /**
+ * POST /exists
+ * ------------
+ * Check if employee email already exists
+ * 
+ * Authorization:
+ * - ALL_USERS (public endpoint for form validation)
+ * 
+ * Old route: POST /employee/exists
+ */
+router.post('/exists', checkEmployeeExistExpressController);
+logger.info('✅ Employee route registered: POST /employees/exists');
+
+/**
  * PATCH /update
  * -------------
  * Update employee profile
@@ -95,47 +155,6 @@ logger.info('✅ Employee route registered: POST /employees/register');
  */
 // TODO: Implement when needed
 
-/**
- * GET /status
- * -----------
- * Returns employee system status and enabled features
- */
-router.get('/status', (_req, res) => {
-  logger.info('👥 Employee system status requested');
-  res.status(200).json({
-    success: true,
-    message: 'Employee system status retrieved',
-    data: {
-      status: 'active',
-      endpoints: {
-        getById: '/api/employees/:id',
-        list: '/api/employees/list',
-        create: '/api/employees/register',
-        update: '/api/employees/update',
-        delete: '/api/employees/:id',
-        search: '/api/employees/search/:keyword',
-        status: '/api/employees/status',
-      },
-      features: {
-        profileManagement: true,
-        documentUpload: false, // TODO: Implement
-        photoUpload: false, // TODO: Implement
-        searchFunctionality: false, // TODO: Implement
-        roleBasedAccess: true,
-      },
-      implemented: {
-        getById: true, // Available via both REST and tRPC
-        list: true, // Available via both REST and tRPC
-        create: true, // Available via both REST and tRPC
-        update: false,
-        delete: false,
-        search: false,
-      },
-      timestamp: new Date().toISOString(),
-    },
-  });
-});
-logger.info('✅ Employee status route registered: GET /employees/status');
 
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
