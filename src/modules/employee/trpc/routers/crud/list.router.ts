@@ -1,7 +1,7 @@
-import { protectedProcedure } from '../../../../trpc/trpc';
-import { logger, logSecurity, PerformanceTimer } from '../../../../utils/logger';
-import { getEmployeesListSchema } from '../../schemas/employee.schemas';
-import { getEmployeesList } from '../../services/employee.service';
+import { protectedProcedure } from '../../../../../trpc/trpc';
+import { logger, logSecurity, PerformanceTimer } from '../../../../../utils/logger';
+import { getEmployeesListSchema } from '../../../schemas/crud/list-employees.schemas';
+import { getEmployeesList } from '../../../services/employee.service';
 
 /**
  * Get Employees List Procedure

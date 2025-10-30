@@ -31,9 +31,10 @@ export enum OnlineStatus {
  * Application User Role Enum
  * --------------------------
  * Represents different user roles in the system for authorization.
+ * Values match database role column format (snake_case).
  */
 export enum ApplicationUserRole {
-  superUser = 'superUser',
+  superUser = 'super_user',
   admin = 'admin',
   hr = 'hr',
   manager = 'manager',

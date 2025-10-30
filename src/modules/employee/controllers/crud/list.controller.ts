@@ -1,5 +1,5 @@
 /**
- * Get Employee By ID Controller
+ * Get Employees List Controller
  * ==============================
  * 
  * Thin wrapper controller for Express routes.
@@ -12,21 +12,21 @@
  */
 
 import { Request, Response } from 'express';
-import { logger } from '../../../utils/logger';
-import { handleGetEmployeeById } from '../services/get-by-id.service';
+import { logger } from '../../../../utils/logger';
+import { handleGetEmployeesList } from '../../services/crud/list.service';
 
 /**
- * Get Employee By ID - Express Controller
- * =======================================
+ * Get Employees List - Express Controller
+ * ========================================
  * Thin wrapper that delegates to the service layer.
  * Matches the auth module pattern.
  */
-export async function getEmployeeByIdExpressController(req: Request, res: Response) {
+export async function getEmployeesListExpressController(req: Request, res: Response) {
   try {
-    return await handleGetEmployeeById(req, res);
+    return await handleGetEmployeesList(req, res);
   } catch (error: any) {
-    logger.error('💥 GetEmployeeById controller error', {
-      type: 'EMPLOYEE_GETBYID_CONTROLLER_ERROR',
+    logger.error('💥 GetEmployeesList controller error', {
+      type: 'EMPLOYEE_LIST_CONTROLLER_ERROR',
       error: error?.message,
       stack: error?.stack
     });

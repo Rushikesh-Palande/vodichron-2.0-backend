@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { logger } from '../../../utils/logger';
-import { getEmployeeByIdExpressController } from '../controllers/get-by-id.controller';
-import { getEmployeesListExpressController } from '../controllers/list.controller';
+import { authenticateJWT } from '../../../middleware/auth.middleware';
+import { getEmployeeByIdExpressController } from '../controllers/crud/get-by-id.controller';
+import { getEmployeesListExpressController } from '../controllers/crud/list.controller';
+import { createEmployeeExpressController } from '../controllers/crud/create.controller';
 
 /**
  * Employee Routes for Vodichron HRMS
@@ -28,7 +30,7 @@ logger.info('👥 Initializing employee routes...');
  * 
  * Old route: GET /employee/:id
  */
-router.get('/:id', getEmployeeByIdExpressController);
+router.get('/:id', authenticateJWT, getEmployeeByIdExpressController);
 logger.info('✅ Employee route registered: GET /employees/:id');
 
 /**
@@ -41,7 +43,7 @@ logger.info('✅ Employee route registered: GET /employees/:id');
  * 
  * Old route: POST /employee/list
  */
-router.post('/list', getEmployeesListExpressController);
+router.post('/list', authenticateJWT, getEmployeesListExpressController);
 logger.info('✅ Employee route registered: POST /employees/list');
 
 /**
@@ -50,11 +52,12 @@ logger.info('✅ Employee route registered: POST /employees/list');
  * Create new employee profile
  * 
  * Authorization:
- * - ADMIN_USERS only
+ * - ADMIN_USERS only (super_user, admin, hr)
  * 
  * Old route: POST /employee/register
  */
-// TODO: Implement when needed
+router.post('/register', authenticateJWT, createEmployeeExpressController);
+logger.info('✅ Employee route registered: POST /employees/register');
 
 /**
  * PATCH /update
@@ -123,7 +126,7 @@ router.get('/status', (_req, res) => {
       implemented: {
         getById: true, // Available via both REST and tRPC
         list: true, // Available via both REST and tRPC
-        create: false,
+        create: true, // Available via both REST and tRPC
         update: false,
         delete: false,
         search: false,
