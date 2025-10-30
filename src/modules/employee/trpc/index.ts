@@ -4,6 +4,7 @@ import { listProcedure } from './routers/crud/list.router';
 import { createEmployeeProcedure } from './routers/crud/create.router';
 import { checkEmployeeExistProcedure } from './routers/crud/check-employee-exist.router';
 import { updateEmployeeProcedure } from './routers/crud/update.router';
+import { searchManagerAssignmentProcedure } from './routers/search/search-manager-assignment.router';
 
 /**
  * Vodichron HRMS Employee tRPC Router
@@ -23,6 +24,7 @@ import { updateEmployeeProcedure } from './routers/crud/update.router';
  * - create: Create a new employee record
  * - checkEmployeeExist: Check if employee email already exists
  * - update: Update an existing employee record
+ * - searchManagerAssignment: Search employees for manager/director assignment
  */
 export const employeeRouter = router({
   getById: getByIdProcedure,
@@ -30,4 +32,5 @@ export const employeeRouter = router({
   create: createEmployeeProcedure,
   checkEmployeeExist: checkEmployeeExistProcedure,
   update: updateEmployeeProcedure,
+  searchManagerAssignment: searchManagerAssignmentProcedure,
 });

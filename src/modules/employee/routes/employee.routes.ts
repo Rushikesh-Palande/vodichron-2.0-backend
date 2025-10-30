@@ -6,6 +6,7 @@ import { getEmployeesListExpressController } from '../controllers/crud/list.cont
 import { createEmployeeExpressController } from '../controllers/crud/create.controller';
 import { checkEmployeeExistExpressController } from '../controllers/crud/check-employee-exist.controller';
 import { updateEmployeeExpressController } from '../controllers/crud/update.controller';
+import { searchManagerAssignmentExpressController } from '../controllers/search/search-manager-assignment.controller';
 
 /**
  * Employee Routes for Vodichron HRMS
@@ -41,6 +42,7 @@ router.get('/status', (_req, res) => {
         create: '/api/employees/register',
         exists: '/api/employees/exists',
         update: '/api/employees/update',
+        searchManagerAssignment: '/api/employees/search/manager-assignment/:keyword',
         delete: '/api/employees/:id',
         search: '/api/employees/search/:keyword',
         status: '/api/employees/status',
@@ -48,9 +50,10 @@ router.get('/status', (_req, res) => {
       features: {
         profileManagement: true,
         emailValidation: true,
+        managerSearch: true, // ✅ Implemented
         documentUpload: false, // TODO: Implement
         photoUpload: false, // TODO: Implement
-        searchFunctionality: false, // TODO: Implement
+        searchFunctionality: false, // TODO: Implement (general search)
         roleBasedAccess: true,
       },
       implemented: {
@@ -59,8 +62,9 @@ router.get('/status', (_req, res) => {
         create: true, // Available via both REST and tRPC
         checkExists: true, // Available via both REST and tRPC
         update: true, // Available via both REST and tRPC
+        searchManagerAssignment: true, // ✅ Available via both REST and tRPC
         delete: false,
-        search: false,
+        search: false, // General search not implemented yet
       },
       timestamp: new Date().toISOString(),
     },
@@ -136,6 +140,27 @@ router.patch('/update', authenticateJWT, updateEmployeeExpressController);
 logger.info('✅ Employee route registered: PATCH /employees/update');
 
 /**
+ * GET /search/manager-assignment/:keyword
+ * ---------------------------------------
+ * Search employees for manager/director assignment
+ * Used in employee registration/update forms for selecting reporting manager/director
+ * 
+ * Authorization:
+ * - ADMIN_USERS (super_user, admin, hr)
+ * 
+ * Query Parameters:
+ * - exclude: Comma-separated list of user UUIDs to exclude (optional)
+ * 
+ * Old route: GET /employee/search/manager-assignment/list/:keyword
+ */
+router.get(
+  '/search/manager-assignment/:keyword',
+  authenticateJWT,
+  searchManagerAssignmentExpressController
+);
+logger.info('✅ Employee route registered: GET /employees/search/manager-assignment/:keyword');
+
+/**
  * DELETE /:id
  * -----------
  * Delete employee profile
@@ -150,7 +175,7 @@ logger.info('✅ Employee route registered: PATCH /employees/update');
 /**
  * GET /search/:keyword
  * -------------------
- * Search employees by keyword
+ * Search employees by keyword (general search)
  * 
  * Authorization:
  * - ADMIN_USERS
