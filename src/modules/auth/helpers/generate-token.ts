@@ -9,7 +9,7 @@
  * - HS256 signing algorithm (HMAC with SHA-256)
  * - Server-side secret key (never exposed to client)
  * - Minimal claims payload (only essential user data)
- * - Short expiry window (default 30 minutes)
+ * - Short expiry window (configurable via JWT_ACCESS_TOKEN_EXPIRES_IN env var)
  * - Stateless verification (no database lookup needed)
  * 
  * Token Structure:
@@ -32,6 +32,7 @@
 import { sign, type SignOptions, type Secret } from 'jsonwebtoken';
 import { config } from '../../../config';
 import { logger } from '../../../utils/logger';
+import { ACCESS_TOKEN_EXPIRES_IN } from '../constants/auth.constants';
 
 /**
  * JWT User Payload
@@ -50,7 +51,7 @@ export interface JwtUserPayload {
  * ---------------------
  * Creates a signed JWT with an expiration window.
  */
-export function generateToken(payload: JwtUserPayload, expiresIn: SignOptions['expiresIn'] = '30m'): string {
+export function generateToken(payload: JwtUserPayload, expiresIn: SignOptions['expiresIn'] = ACCESS_TOKEN_EXPIRES_IN): string {
   const secret: Secret = config.security.sessionSecret as unknown as Secret;
   const token = sign({ user: payload }, secret, { expiresIn });
   logger.debug('🔐 Access token generated', {

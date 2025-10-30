@@ -32,6 +32,11 @@ import employeeRoutes from '../modules/employee/routes/employee.routes';
 router.use('/api/employees', employeeRoutes);
 logger.debug('  📍 Mounted: /api/employees → employeeRoutes');
 
+// User routes
+import userRoutes from '../modules/users/routes/user.routes';
+router.use('/api/user', userRoutes);
+logger.debug('  📍 Mounted: /api/user → userRoutes');
+
 // TODO: Add more routes here as they are implemented
 // router.use('/api/leaves', leaveRoutes);
 // router.use('/api/timesheets', timesheetRoutes);

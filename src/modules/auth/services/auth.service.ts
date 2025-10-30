@@ -177,7 +177,7 @@ export async function handleExtendSession(req: any, res: any) {
     return res.status(200).json({
       success: true,
       message: 'Session extended',
-      data: { token: accessToken, tokenType: 'Bearer', expiresIn: '30m' },
+      data: { token: accessToken, tokenType: 'Bearer', expiresIn: ACCESS_TOKEN_EXPIRES_IN },
       timestamp: new Date().toISOString(),
     });
   } else {
@@ -191,7 +191,7 @@ export async function handleExtendSession(req: any, res: any) {
     return res.status(200).json({
       success: true,
       message: 'Session extended',
-      data: { token: accessToken, tokenType: 'Bearer', expiresIn: '30m' },
+      data: { token: accessToken, tokenType: 'Bearer', expiresIn: ACCESS_TOKEN_EXPIRES_IN },
       timestamp: new Date().toISOString(),
     });
   }
