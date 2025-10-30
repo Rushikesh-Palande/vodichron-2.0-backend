@@ -82,12 +82,15 @@ export const createEmployeeSchema = z.object({
   
   dateOfJoining: z.string().min(1, 'Date of joining is required'),
   
-  reportingManagerId: z.string().min(1, 'Reporting manager is required').uuid('Reporting manager must be a valid UUID'),
+  reportingManagerId: z.union([
+    z.string().uuid('Reporting manager must be a valid UUID'),
+    z.null(),
+  ]).optional(),
   
-  reportingDirectorId: z.string()
-    .uuid('Reporting director must be a valid UUID')
-    .optional()
-    .nullable(),
+  reportingDirectorId: z.union([
+    z.string().uuid('Reporting director must be a valid UUID'),
+    z.null(),
+  ]).optional(),
   
   designation: z.string().min(1, 'Designation is required'),
   

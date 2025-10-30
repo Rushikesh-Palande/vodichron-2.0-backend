@@ -37,6 +37,11 @@ import userRoutes from '../modules/users/routes/user.routes';
 router.use('/api/user', userRoutes);
 logger.debug('  📍 Mounted: /api/user → userRoutes');
 
+// Master Data routes
+import masterDataRoutes from '../modules/master-data/routes/master-data.routes';
+router.use('/api/master-data', masterDataRoutes);
+logger.debug('  📍 Mounted: /api/master-data → masterDataRoutes');
+
 // TODO: Add more routes here as they are implemented
 // router.use('/api/leaves', leaveRoutes);
 // router.use('/api/timesheets', timesheetRoutes);
