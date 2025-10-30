@@ -19,6 +19,71 @@ import { logger, logDatabase, PerformanceTimer } from '../../../../utils/logger'
 import { CreateEmployeeInput } from '../../schemas/crud/create.schemas';
 
 /**
+ * Check if Employee ID Exists
+ * ============================
+ * Checks if an employee ID already exists in the database
+ * Used for real-time validation before creating new employee
+ * 
+ * @param employeeId - Employee ID to check
+ * @returns Employee record if exists, null otherwise
+ */
+export async function checkEmployeeIdExists(
+  employeeId: string
+): Promise<{ uuid: string; name: string } | null> {
+  const timer = new PerformanceTimer('checkEmployeeIdExists');
+  
+  try {
+    logger.debug('🔍 Checking if employee ID exists', {
+      employeeId,
+      operation: 'checkEmployeeIdExists'
+    });
+
+    const sql = `
+      SELECT uuid, name, employeeId
+      FROM employees
+      WHERE employeeId = :employeeId
+      LIMIT 1
+    `;
+
+    const result = await sequelize.query<{ uuid: string; name: string }>(sql, {
+      replacements: { employeeId },
+      type: QueryTypes.SELECT,
+      raw: true,
+    });
+
+    const duration = timer.end();
+    logDatabase('CHECK_EMPLOYEE_ID', employeeId, duration);
+
+    if (result.length > 0) {
+      logger.debug('✅ Employee ID found', {
+        employeeId,
+        employeeUuid: result[0].uuid,
+        duration: `${duration}ms`
+      });
+      return result[0];
+    }
+
+    logger.debug('❌ Employee ID not found', {
+      employeeId,
+      duration: `${duration}ms`
+    });
+    return null;
+
+  } catch (error: any) {
+    const duration = timer.end();
+    logDatabase('CHECK_EMPLOYEE_ID_ERROR', employeeId, duration, error);
+    
+    logger.error('❌ Failed to check employee ID', {
+      employeeId,
+      error: error.message,
+      duration: `${duration}ms`
+    });
+
+    throw new Error(`Database error while checking employee ID: ${error.message}`);
+  }
+}
+
+/**
  * Check if Employee Email Exists
  * ===============================
  * Checks if an email already exists in the database

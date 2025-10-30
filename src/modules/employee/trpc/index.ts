@@ -3,6 +3,7 @@ import { getByIdProcedure } from './routers/crud/get-by-id.router';
 import { listProcedure } from './routers/crud/list.router';
 import { createEmployeeProcedure } from './routers/crud/create.router';
 import { checkEmployeeExistProcedure } from './routers/crud/check-employee-exist.router';
+import { checkEmployeeIdExistsProcedure } from './routers/crud/check-employee-id-exists.router';
 import { updateEmployeeProcedure } from './routers/crud/update.router';
 import { searchManagerAssignmentProcedure } from './routers/search/search-manager-assignment.router';
 
@@ -31,6 +32,7 @@ export const employeeRouter = router({
   list: listProcedure,
   create: createEmployeeProcedure,
   checkEmployeeExist: checkEmployeeExistProcedure,
+  checkEmployeeIdExists: checkEmployeeIdExistsProcedure,
   update: updateEmployeeProcedure,
   searchManagerAssignment: searchManagerAssignmentProcedure,
 });
