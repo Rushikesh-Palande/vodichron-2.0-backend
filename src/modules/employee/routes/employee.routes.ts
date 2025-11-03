@@ -13,6 +13,7 @@ import { searchRoleAssignmentExpressController } from '../controllers/search/sea
 import { searchLeaveApproverExpressController } from '../controllers/search/search-leave-approver.controller';
 import { uploadDocumentExpressController } from '../controllers/documents/upload-document.controller';
 import { getSelfDocumentsExpressController } from '../controllers/documents/get-self-documents.controller';
+import { deleteEmployeeDocumentExpressController } from '../controllers/documents/delete-employee-document.controller';
 import { upload } from '../../../middleware/upload.middleware';
 
 /**
@@ -282,15 +283,37 @@ logger.info('✅ Employee route registered: POST /employees/document/upload');
 router.get('/documents/:id', authenticateJWT, getSelfDocumentsExpressController);
 logger.info('✅ Employee route registered: GET /employees/documents/:id');
 
+/**
+ * DELETE /document/:empid/:docid
+ * ------------------------------
+ * Delete employee document
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can delete their own documents)
+ * - HR/SuperUser can delete any employee's documents
+ * - Service layer enforces: empid === logged-in user OR user is HR/SuperUser
+ * 
+ * URL Parameters:
+ * - empid: Employee UUID who owns the document
+ * - docid: Document UUID to delete
+ * 
+ * Response:
+ * - success: boolean
+ * - message: string
+ * - data: deletion result
+ * 
+ * Old route: DELETE /employee/document/:empid/:docid
+ */
+router.delete('/document/:empid/:docid', authenticateJWT, deleteEmployeeDocumentExpressController);
+logger.info('✅ Employee route registered: DELETE /employees/document/:empid/:docid');
+
 
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
 // - POST /photo/upload
 // - GET /image/:id
 // - DELETE /image/:id
-// - GET /documents/:id
 // - POST /all/documents
-// - DELETE /document/:empid/:docid
 // - GET /document/download/:empid/:docid
 // - PATCH /document/approve/:docid
 
