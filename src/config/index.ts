@@ -158,6 +158,14 @@ export const config: AppConfig = {
   // ------------
   // Frontend application URL (for password reset emails, etc.)
   frontendUrl: getEnvVariable('FRONTEND_URL', false, 'http://localhost:3000'),           // Frontend URL (default: localhost:3000)
+
+  // Asset/File Upload Configuration
+  // -------------------------------
+  // Settings for file uploads (documents, photos)
+  asset: {
+    path: getEnvVariable('ASSET_PATH', false, './assets'),                              // Path for storing uploaded assets
+    allowUpload: getEnvBoolean('ASSET_ALLOW_UPLOAD', true),                            // Allow/block uploads
+  },
 };
 
 /**

@@ -91,6 +91,11 @@ export interface EmailConfig {
   };
 }
 
+export interface AssetConfig {
+  path: string;          // Path for storing uploaded assets (e.g., './assets')
+  allowUpload: boolean;  // Allow/block uploads for the environment
+}
+
 export interface AppConfig {
   server: ServerConfig;
   isDevelopment: boolean;
@@ -103,4 +108,5 @@ export interface AppConfig {
   db: DatabaseConfig;
   email: EmailConfig;
   frontendUrl: string;
+  asset: AssetConfig;
 }

@@ -11,6 +11,8 @@ import { searchManagerAssignmentExpressController } from '../controllers/search/
 import { searchAllEmployeesExpressController } from '../controllers/search/search-all-employees.controller';
 import { searchRoleAssignmentExpressController } from '../controllers/search/search-role-assignment.controller';
 import { searchLeaveApproverExpressController } from '../controllers/search/search-leave-approver.controller';
+import { uploadDocumentExpressController } from '../controllers/documents/upload-document.controller';
+import { upload } from '../../../middleware/upload.middleware';
 
 /**
  * Employee Routes for Vodichron HRMS
@@ -231,13 +233,40 @@ logger.info('✅ Employee route registered: GET /employees/search/role-assignmen
 router.get('/search/leave-approver/:keyword', authenticateJWT, searchLeaveApproverExpressController);
 logger.info('✅ Employee route registered: GET /employees/search/leave-approver/:keyword');
 
+/**
+ * POST /document/upload
+ * --------------------
+ * Upload employee documents (PAN, Aadhaar, etc.)
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can only upload their own documents)
+ * - Service layer enforces userId === logged-in user
+ * 
+ * Request:
+ * - Content-Type: multipart/form-data
+ * - Fields: userId (UUID), documentType (string), fileupload (file)
+ * 
+ * File Upload:
+ * - Handled by multer middleware (upload.single('fileupload'))
+ * - Max file size: 10MB
+ * - Stored in: {assetPath}/employee_documents/
+ * 
+ * Old route: POST /employee/document/upload
+ */
+router.post(
+  '/document/upload',
+  authenticateJWT,
+  upload.single('fileupload'),
+  uploadDocumentExpressController
+);
+logger.info('✅ Employee route registered: POST /employees/document/upload');
+
 
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
 // - POST /photo/upload
 // - GET /image/:id
 // - DELETE /image/:id
-// - POST /document/upload
 // - GET /documents/:id
 // - POST /all/documents
 // - DELETE /document/:empid/:docid
