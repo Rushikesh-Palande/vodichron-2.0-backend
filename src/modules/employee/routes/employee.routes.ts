@@ -10,6 +10,7 @@ import { deleteEmployeeExpressController } from '../controllers/crud/delete.cont
 import { searchManagerAssignmentExpressController } from '../controllers/search/search-manager-assignment.controller';
 import { searchAllEmployeesExpressController } from '../controllers/search/search-all-employees.controller';
 import { searchRoleAssignmentExpressController } from '../controllers/search/search-role-assignment.controller';
+import { searchLeaveApproverExpressController } from '../controllers/search/search-leave-approver.controller';
 
 /**
  * Employee Routes for Vodichron HRMS
@@ -46,6 +47,7 @@ router.get('/status', (_req, res) => {
         exists: '/api/employees/exists',
         update: '/api/employees/update',
         searchManagerAssignment: '/api/employees/search/manager-assignment/:keyword',
+        searchLeaveApprover: '/api/employees/search/leave-approver/:keyword',
         delete: '/api/employees/:id',
         search: '/api/employees/search/:keyword',
         status: '/api/employees/status',
@@ -66,6 +68,7 @@ router.get('/status', (_req, res) => {
         checkExists: true, // Available via both REST and tRPC
         update: true, // Available via both REST and tRPC
         searchManagerAssignment: true, // ✅ Available via both REST and tRPC
+        searchLeaveApprover: true, // ✅ Available via both REST and tRPC
         delete: true, // ✅ Available via both REST and tRPC
         searchAll: true, // ✅ General search (available via both REST and tRPC)
       },
@@ -209,11 +212,28 @@ logger.info('✅ Employee route registered: GET /employees/search/:keyword');
 router.get('/search/role-assignment/:keyword', authenticateJWT, searchRoleAssignmentExpressController);
 logger.info('✅ Employee route registered: GET /employees/search/role-assignment/:keyword');
 
+/**
+ * GET /search/leave-approver/:keyword
+ * -----------------------------------
+ * Search employees for leave approver assignment (Directors only)
+ * Used when assigning leave approvers - shows only Directors
+ * 
+ * Authorization:
+ * - ALL_USERS (any authenticated user can search)
+ * 
+ * Query Parameters:
+ * - exclude: Comma-separated list of user UUIDs to exclude (optional)
+ * 
+ * Note: Auto-excludes logged-in user from results
+ * 
+ * Old route: GET /employee/search/leave-approver/list/:keyword
+ */
+router.get('/search/leave-approver/:keyword', authenticateJWT, searchLeaveApproverExpressController);
+logger.info('✅ Employee route registered: GET /employees/search/leave-approver/:keyword');
+
 
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
-// - GET /search/manager-assignment/list/:keyword
-// - GET /search/leave-approver/list/:keyword
 // - POST /photo/upload
 // - GET /image/:id
 // - DELETE /image/:id

@@ -1,19 +1,18 @@
 /**
- * Search Role Assignment Controller (Express REST API)
- * ===================================================
+ * Search Leave Approver Controller (Express REST API)
+ * ==================================================
  * 
  * Thin wrapper controller for Express routes.
  * Delegates to the service layer for business logic.
  * 
- * Based on: old vodichron searchEmployeeForRoleAssignment controller (lines 188-202)
+ * Based on: old vodichron searchEmployeeForLeaveApproverAssigment controller (lines 217-230)
  * 
  * Pattern:
  * Controller (thin wrapper) → Service (business logic) → Store (database)
  * 
- * Endpoint: GET /api/employees/search/role-assignment/:keyword
+ * Endpoint: GET /api/employees/search/leave-approver/:keyword
  * 
  * Request:
- * - URL Parameter: keyword (search term)
  * - URL Parameter: keyword (search term)
  * - Query Parameter: exclude (comma-separated UUIDs, optional)
  * - Headers: Authorization (JWT token)
@@ -27,17 +26,18 @@
  *   timestamp: "2024-01-01T00:00:00.000Z"
  * }
  * 
- * Note: Returns only employees WITHOUT application_users record (no role)
+ * Note: Returns only employees with designation='Director'
+ * Auto-excludes logged-in user from results
  */
 
 import { Request, Response } from 'express';
 import { logger } from '../../../../utils/logger';
-import { searchForRoleAssignment } from '../../services/search/search-role-assignment.service';
-import { searchRoleAssignmentSchema } from '../../schemas/search/search-role-assignment.schemas';
+import { searchForLeaveApprover } from '../../services/search/search-leave-approver.service';
+import { searchLeaveApproverSchema } from '../../schemas/search/search-leave-approver.schemas';
 
 /**
- * Search Role Assignment - Express Controller
- * ===========================================
+ * Search Leave Approver - Express Controller
+ * ==========================================
  * 
  * Thin wrapper that delegates to the service layer.
  * 
@@ -48,16 +48,16 @@ import { searchRoleAssignmentSchema } from '../../schemas/search/search-role-ass
  * @param req - Express request with params.keyword and query.exclude
  * @param res - Express response
  */
-export async function searchRoleAssignmentExpressController(req: Request, res: Response) {
+export async function searchLeaveApproverExpressController(req: Request, res: Response) {
   try {
     // ==========================================================================
     // STEP 1: Log Incoming Request
     // ==========================================================================
-    logger.info('📥 Search role assignment request received (Express)', {
+    logger.info('📥 Search leave approver request received (Express)', {
       keyword: req.params.keyword,
       exclude: req.query.exclude,
       userId: (req as any).user?.uuid,
-      endpoint: 'GET /employees/search/role-assignment/:keyword'
+      endpoint: 'GET /employees/search/leave-approver/:keyword'
     });
 
     // ==========================================================================
@@ -66,7 +66,7 @@ export async function searchRoleAssignmentExpressController(req: Request, res: R
     const user = (req as any).user;
     
     if (!user) {
-      logger.warn('⛔ Unauthenticated role assignment search attempt', {
+      logger.warn('⛔ Unauthenticated leave approver search attempt', {
         keyword: req.params.keyword
       });
 
@@ -81,7 +81,7 @@ export async function searchRoleAssignmentExpressController(req: Request, res: R
     // STEP 3: Parse Query Parameters
     // ==========================================================================
     // Parse exclude query param (comma-separated UUIDs)
-    // Matches old controller lines 191-194
+    // Matches old controller lines 220-223
     let excludedUsers: string[] = [];
     if (typeof req.query.exclude === 'string' && req.query.exclude.trim() !== '') {
       excludedUsers = req.query.exclude.split(',').map(id => id.trim());
@@ -90,7 +90,7 @@ export async function searchRoleAssignmentExpressController(req: Request, res: R
     // ==========================================================================
     // STEP 4: Validate Input
     // ==========================================================================
-    const validatedInput = searchRoleAssignmentSchema.parse({
+    const validatedInput = searchLeaveApproverSchema.parse({
       keyword: req.params.keyword,
       excludedUsers
     });
@@ -98,7 +98,8 @@ export async function searchRoleAssignmentExpressController(req: Request, res: R
     // ==========================================================================
     // STEP 5: Call Service Layer
     // ==========================================================================
-    const results = await searchForRoleAssignment(validatedInput, {
+    // Service layer will auto-add logged-in user to exclusion list (line 225)
+    const results = await searchForLeaveApprover(validatedInput, {
       uuid: user.uuid,
       role: user.role,
       email: user.email || ''
@@ -107,10 +108,10 @@ export async function searchRoleAssignmentExpressController(req: Request, res: R
     // ==========================================================================
     // STEP 6: Send Success Response
     // ==========================================================================
-    logger.info('✅ Role assignment search completed successfully (Express)', {
+    logger.info('✅ Leave approver search completed successfully (Express)', {
       keyword: req.params.keyword,
       resultCount: results.length,
-      description: 'Employees without roles',
+      description: 'Directors only',
       userId: user.uuid
     });
 
@@ -125,8 +126,8 @@ export async function searchRoleAssignmentExpressController(req: Request, res: R
     // ==========================================================================
     // STEP 7: Error Handling
     // ==========================================================================
-    logger.error('💥 Search role assignment controller error', {
-      type: 'ROLE_ASSIGNMENT_SEARCH_CONTROLLER_ERROR',
+    logger.error('💥 Search leave approver controller error', {
+      type: 'LEAVE_APPROVER_SEARCH_CONTROLLER_ERROR',
       keyword: req.params.keyword,
       error: error?.message,
       stack: error?.stack
@@ -134,7 +135,7 @@ export async function searchRoleAssignmentExpressController(req: Request, res: R
 
     // Map error codes to HTTP status codes
     let statusCode = 500;
-    let errorMessage = error?.message || 'Failed to search employees for role assignment';
+    let errorMessage = error?.message || 'Failed to search employees for leave approver';
 
     if (error?.name === 'ZodError') {
       statusCode = 400;
