@@ -12,6 +12,7 @@ import { searchAllEmployeesExpressController } from '../controllers/search/searc
 import { searchRoleAssignmentExpressController } from '../controllers/search/search-role-assignment.controller';
 import { searchLeaveApproverExpressController } from '../controllers/search/search-leave-approver.controller';
 import { uploadDocumentExpressController } from '../controllers/documents/upload-document.controller';
+import { getSelfDocumentsExpressController } from '../controllers/documents/get-self-documents.controller';
 import { upload } from '../../../middleware/upload.middleware';
 
 /**
@@ -260,6 +261,26 @@ router.post(
   uploadDocumentExpressController
 );
 logger.info('✅ Employee route registered: POST /employees/document/upload');
+
+/**
+ * GET /documents/:id
+ * -----------------
+ * Get employee's own documents with HR approval details
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can only view their own documents)
+ * - Service layer enforces params.id === logged-in user
+ * 
+ * Response:
+ * - Array of documents with:
+ *   - Document type, filename
+ *   - HR approval status, comments
+ *   - HR approver details (if reviewed)
+ * 
+ * Old route: GET /employee/documents/:id
+ */
+router.get('/documents/:id', authenticateJWT, getSelfDocumentsExpressController);
+logger.info('✅ Employee route registered: GET /employees/documents/:id');
 
 
 // TODO: Add more routes here as controllers are implemented
