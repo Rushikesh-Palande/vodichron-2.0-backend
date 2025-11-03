@@ -14,6 +14,7 @@ import { searchLeaveApproverExpressController } from '../controllers/search/sear
 import { uploadDocumentExpressController } from '../controllers/documents/upload-document.controller';
 import { getSelfDocumentsExpressController } from '../controllers/documents/get-self-documents.controller';
 import { deleteEmployeeDocumentExpressController } from '../controllers/documents/delete-employee-document.controller';
+import { downloadEmployeeDocumentExpressController } from '../controllers/documents/download-employee-document.controller';
 import { upload } from '../../../middleware/upload.middleware';
 
 /**
@@ -307,6 +308,29 @@ logger.info('✅ Employee route registered: GET /employees/documents/:id');
 router.delete('/document/:empid/:docid', authenticateJWT, deleteEmployeeDocumentExpressController);
 logger.info('✅ Employee route registered: DELETE /employees/document/:empid/:docid');
 
+/**
+ * GET /document/download/:empid/:docid
+ * ------------------------------------
+ * Download employee document as file attachment
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can download their own documents)
+ * - HR/SuperUser can download any employee's documents
+ * - Service layer enforces: empid === logged-in user OR user is HR/SuperUser
+ * 
+ * URL Parameters:
+ * - empid: Employee UUID who owns the document
+ * - docid: Document UUID to download
+ * 
+ * Response:
+ * - Binary file download (with appropriate Content-Type)
+ * - Uses res.sendFile() to stream file
+ * 
+ * Old route: GET /employee/document/download/:empid/:docid
+ */
+router.get('/document/download/:empid/:docid', authenticateJWT, downloadEmployeeDocumentExpressController);
+logger.info('✅ Employee route registered: GET /employees/document/download/:empid/:docid');
+
 
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
@@ -314,7 +338,6 @@ logger.info('✅ Employee route registered: DELETE /employees/document/:empid/:d
 // - GET /image/:id
 // - DELETE /image/:id
 // - POST /all/documents
-// - GET /document/download/:empid/:docid
 // - PATCH /document/approve/:docid
 
 export default router;
