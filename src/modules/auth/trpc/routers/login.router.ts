@@ -161,7 +161,7 @@ export const loginProcedure = publicProcedure
             token: accessToken,
             tokenType: 'Bearer',
             expiresIn: ACCESS_EXPIRES_IN,
-            subject: { id: user.uuid, type: 'employee', role: user.role, email: employee.officialEmailId || null },
+            subject: { id: user.uuid, type: 'employee', role: user.role, email: employee.officialEmailId || null, employeeId: employee.employeeId || null },
           },
           timestamp: new Date().toISOString(),
         };
@@ -238,7 +238,7 @@ export const loginProcedure = publicProcedure
             token: accessToken,
             tokenType: 'Bearer',
             expiresIn: ACCESS_EXPIRES_IN,
-            subject: { id: customer.uuid, type: 'customer', role: 'customer', email: customer.email },
+            subject: { id: customer.uuid, type: 'customer', role: 'customer', email: customer.email, customerId: customer.uuid },
           },
           timestamp: new Date().toISOString(),
         };
