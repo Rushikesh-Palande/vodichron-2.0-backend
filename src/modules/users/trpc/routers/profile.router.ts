@@ -31,12 +31,36 @@ export const getProfileProcedure = protectedProcedure.query(async ({ ctx }) => {
     if (ctx.user.type === 'employee') {
       // ctx.user.uuid is from application_users table, need to get employeeId first
       const appUser = await User.findOne({ where: { uuid: ctx.user.uuid } });
+      
+      logger.debug('🔍 Looking up employee details', {
+        userUuid: ctx.user.uuid,
+        employeeId: appUser?.employeeId,
+        hasAppUser: !!appUser
+      });
+      
       if (appUser && appUser.employeeId) {
         // Now fetch employee by employeeId
         const employee = await getEmployeeByUuidWithManagerDetail(appUser.employeeId);
+        
+        logger.debug('👤 Employee lookup result', {
+          employeeId: appUser.employeeId,
+          found: !!employee,
+          name: employee?.name
+        });
+        
         if (employee) {
           employeeName = employee.name;
+        } else {
+          logger.warn('⚠️ Employee record not found for user', {
+            userUuid: ctx.user.uuid,
+            employeeId: appUser.employeeId
+          });
         }
+      } else {
+        logger.warn('⚠️ No employeeId found for user', {
+          userUuid: ctx.user.uuid,
+          hasAppUser: !!appUser
+        });
       }
     }
 
