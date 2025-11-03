@@ -8,6 +8,7 @@ import { checkEmployeeExistExpressController } from '../controllers/crud/check-e
 import { updateEmployeeExpressController } from '../controllers/crud/update.controller';
 import { deleteEmployeeExpressController } from '../controllers/crud/delete.controller';
 import { searchManagerAssignmentExpressController } from '../controllers/search/search-manager-assignment.controller';
+import { searchAllEmployeesExpressController } from '../controllers/search/search-all-employees.controller';
 
 /**
  * Employee Routes for Vodichron HRMS
@@ -65,7 +66,7 @@ router.get('/status', (_req, res) => {
         update: true, // Available via both REST and tRPC
         searchManagerAssignment: true, // ✅ Available via both REST and tRPC
         delete: true, // ✅ Available via both REST and tRPC
-        search: false, // General search not implemented yet
+        searchAll: true, // ✅ General search (available via both REST and tRPC)
       },
       timestamp: new Date().toISOString(),
     },
@@ -180,11 +181,15 @@ logger.info('✅ Employee route registered: DELETE /employees/:id');
  * Search employees by keyword (general search)
  * 
  * Authorization:
- * - ADMIN_USERS
+ * - ALL_USERS (any authenticated user can search)
+ * 
+ * Query Parameters:
+ * - exclude: Comma-separated list of user UUIDs to exclude (optional)
  * 
  * Old route: GET /employee/search/list/:keyword
  */
-// TODO: Implement when needed
+router.get('/search/:keyword', authenticateJWT, searchAllEmployeesExpressController);
+logger.info('✅ Employee route registered: GET /employees/search/:keyword');
 
 
 // TODO: Add more routes here as controllers are implemented
