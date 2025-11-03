@@ -9,6 +9,7 @@ import { updateEmployeeExpressController } from '../controllers/crud/update.cont
 import { deleteEmployeeExpressController } from '../controllers/crud/delete.controller';
 import { searchManagerAssignmentExpressController } from '../controllers/search/search-manager-assignment.controller';
 import { searchAllEmployeesExpressController } from '../controllers/search/search-all-employees.controller';
+import { searchRoleAssignmentExpressController } from '../controllers/search/search-role-assignment.controller';
 
 /**
  * Employee Routes for Vodichron HRMS
@@ -191,11 +192,26 @@ logger.info('✅ Employee route registered: DELETE /employees/:id');
 router.get('/search/:keyword', authenticateJWT, searchAllEmployeesExpressController);
 logger.info('✅ Employee route registered: GET /employees/search/:keyword');
 
+/**
+ * GET /search/role-assignment/:keyword
+ * ------------------------------------
+ * Search employees for role assignment (employees WITHOUT application roles)
+ * Used when creating new application users - shows only employees without roles
+ * 
+ * Authorization:
+ * - ALL_USERS (any authenticated user can search)
+ * 
+ * Query Parameters:
+ * - exclude: Comma-separated list of user UUIDs to exclude (optional)
+ * 
+ * Old route: GET /employee/search/role-assignment/list/:keyword
+ */
+router.get('/search/role-assignment/:keyword', authenticateJWT, searchRoleAssignmentExpressController);
+logger.info('✅ Employee route registered: GET /employees/search/role-assignment/:keyword');
+
 
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
-// - POST /exists - Check if employee email exists
-// - GET /search/role-assignment/list/:keyword
 // - GET /search/manager-assignment/list/:keyword
 // - GET /search/leave-approver/list/:keyword
 // - POST /photo/upload

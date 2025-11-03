@@ -8,6 +8,7 @@ import { updateEmployeeProcedure } from './routers/crud/update.router';
 import { deleteEmployeeProcedure } from './routers/crud/delete.router';
 import { searchManagerAssignmentProcedure } from './routers/search/search-manager-assignment.router';
 import { searchAllEmployeesProcedure } from './routers/search/search-all-employees.router';
+import { searchRoleAssignmentProcedure } from './routers/search/search-role-assignment.router';
 
 /**
  * Vodichron HRMS Employee tRPC Router
@@ -30,6 +31,7 @@ import { searchAllEmployeesProcedure } from './routers/search/search-all-employe
  * - delete: Delete an employee record
  * - searchManagerAssignment: Search employees for manager/director assignment
  * - searchAll: General employee search by keyword
+ * - searchRoleAssignment: Search employees for role assignment (without roles)
  */
 export const employeeRouter = router({
   getById: getByIdProcedure,
@@ -41,4 +43,5 @@ export const employeeRouter = router({
   delete: deleteEmployeeProcedure,
   searchManagerAssignment: searchManagerAssignmentProcedure,
   searchAll: searchAllEmployeesProcedure,
+  searchRoleAssignment: searchRoleAssignmentProcedure,
 });
