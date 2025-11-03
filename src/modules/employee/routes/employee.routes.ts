@@ -6,6 +6,7 @@ import { getEmployeesListExpressController } from '../controllers/crud/list.cont
 import { createEmployeeExpressController } from '../controllers/crud/create.controller';
 import { checkEmployeeExistExpressController } from '../controllers/crud/check-employee-exist.controller';
 import { updateEmployeeExpressController } from '../controllers/crud/update.controller';
+import { deleteEmployeeExpressController } from '../controllers/crud/delete.controller';
 import { searchManagerAssignmentExpressController } from '../controllers/search/search-manager-assignment.controller';
 
 /**
@@ -63,7 +64,7 @@ router.get('/status', (_req, res) => {
         checkExists: true, // Available via both REST and tRPC
         update: true, // Available via both REST and tRPC
         searchManagerAssignment: true, // ✅ Available via both REST and tRPC
-        delete: false,
+        delete: true, // ✅ Available via both REST and tRPC
         search: false, // General search not implemented yet
       },
       timestamp: new Date().toISOString(),
@@ -166,11 +167,12 @@ logger.info('✅ Employee route registered: GET /employees/search/manager-assign
  * Delete employee profile
  * 
  * Authorization:
- * - SUPER_USERS only
+ * - ADMIN_USERS only (HR, SuperUser)
  * 
  * Old route: DELETE /employee/:id
  */
-// TODO: Implement when needed
+router.delete('/:id', authenticateJWT, deleteEmployeeExpressController);
+logger.info('✅ Employee route registered: DELETE /employees/:id');
 
 /**
  * GET /search/:keyword
