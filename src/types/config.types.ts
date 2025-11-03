@@ -77,6 +77,20 @@ export interface DatabaseConfig {
   };
 }
 
+export interface EmailConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth: {
+    user: string;
+    pass: string;
+  };
+  from: {
+    name: string;
+    address: string;
+  };
+}
+
 export interface AppConfig {
   server: ServerConfig;
   isDevelopment: boolean;
@@ -87,4 +101,6 @@ export interface AppConfig {
   api: ApiConfig;
   jwt: JwtConfig;
   db: DatabaseConfig;
+  email: EmailConfig;
+  frontendUrl: string;
 }

@@ -136,6 +136,28 @@ export const config: AppConfig = {
       idle: getEnvNumber('DB_POOL_IDLE', 10000, 1000, 60000),               // Max idle time (ms) before release
     },
   },
+
+  // Email Configuration
+  // ------------------
+  // SMTP email service settings for sending notifications
+  email: {
+    host: getEnvVariable('EMAIL_HOST', false, 'smtp.gmail.com'),                          // SMTP host (default: Gmail)
+    port: getEnvNumber('EMAIL_PORT', 587, 1, 65535),                                      // SMTP port (default: 587 for TLS)
+    secure: getEnvBoolean('EMAIL_SECURE', false),                                         // Use SSL/TLS (false = use STARTTLS)
+    auth: {
+      user: getEnvVariable('EMAIL_USER', false, ''),                                      // SMTP username/email
+      pass: getEnvVariable('EMAIL_PASSWORD', false, ''),                                  // SMTP password/app password
+    },
+    from: {
+      name: getEnvVariable('EMAIL_FROM_NAME', false, 'Vodichron HRMS'),                  // Sender name
+      address: getEnvVariable('EMAIL_FROM_ADDRESS', false, 'noreply@vodichron.com'),     // Sender email address
+    },
+  },
+
+  // Frontend URL
+  // ------------
+  // Frontend application URL (for password reset emails, etc.)
+  frontendUrl: getEnvVariable('FRONTEND_URL', false, 'http://localhost:3000'),           // Frontend URL (default: localhost:3000)
 };
 
 /**

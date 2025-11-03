@@ -3,6 +3,9 @@ import { logger } from '../../../utils/logger';
 import { authLogin } from '../controllers/login.controller';
 import { logoutUser } from '../controllers/logout.controller';
 import { extendSession } from '../controllers/extend-session.controller';
+import { generateResetLinkController } from '../controllers/generate-reset-link.controller';
+import { validateResetLinkController } from '../controllers/validate-reset-link.controller';
+import { resetPasswordController } from '../controllers/reset-password.controller';
 
 /**
  * Authentication Routes for Vodichron HRMS
@@ -39,6 +42,33 @@ logger.info('✅ Auth route registered: POST /auth/logout');
  */
 router.post('/extend-session', extendSession);
 logger.info('✅ Auth route registered: POST /auth/extend-session');
+
+/**
+ * POST /generate-reset-link
+ * ------------------------
+ * Generates password reset link and sends email.
+ * Public endpoint (no auth required).
+ */
+router.post('/generate-reset-link', generateResetLinkController);
+logger.info('✅ Auth route registered: POST /auth/generate-reset-link');
+
+/**
+ * POST /validate-reset-link
+ * -------------------------
+ * Validates password reset token from URL.
+ * Public endpoint (no auth required).
+ */
+router.post('/validate-reset-link', validateResetLinkController);
+logger.info('✅ Auth route registered: POST /auth/validate-reset-link');
+
+/**
+ * POST /reset-password
+ * -------------------
+ * Resets user password with validated token.
+ * Public endpoint (no auth required).
+ */
+router.post('/reset-password', resetPasswordController);
+logger.info('✅ Auth route registered: POST /auth/reset-password');
 
 /**
  * GET /status
