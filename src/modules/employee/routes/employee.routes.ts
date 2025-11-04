@@ -19,6 +19,7 @@ import { getReporteeDocumentsExpressController } from '../controllers/documents/
 import { updateDocumentStatusExpressController } from '../controllers/documents/update-document-status.controller';
 import { uploadPhotoExpressController } from '../controllers/photos/upload-photo.controller';
 import { getImageExpressController } from '../controllers/photos/get-image.controller';
+import { deleteImageExpressController } from '../controllers/photos/delete-image.controller';
 import { upload } from '../../../middleware/upload.middleware';
 
 /**
@@ -432,8 +433,31 @@ logger.info('✅ Employee route registered: POST /employees/photo/upload');
 router.get('/image/:id', authenticateJWT, getImageExpressController);
 logger.info('✅ Employee route registered: GET /employees/image/:id');
 
-// TODO: Add more routes here as controllers are implemented
-// Following the pattern from old vodichron:
-// - DELETE /image/:id
+/**
+ * DELETE /image/:id
+ * ----------------
+ * Delete employee photo
+ * 
+ * Authorization:
+ * - Should be restricted to self or HR/Admin
+ * - No explicit authorization in old code (to be improved)
+ * 
+ * URL Parameter:
+ * - id: Employee UUID
+ * 
+ * Response:
+ * - success: boolean
+ * - message: string
+ * 
+ * Actions:
+ * 1. Updates database (sets recentPhotograph to empty string)
+ * 2. Deletes physical file from filesystem
+ * 
+ * Old route: DELETE /employee/image/:id
+ */
+router.delete('/image/:id', authenticateJWT, deleteImageExpressController);
+logger.info('✅ Employee route registered: DELETE /employees/image/:id');
+
+// All photo management routes implemented ✅
 
 export default router;

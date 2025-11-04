@@ -13,6 +13,7 @@ import { getSelfDocumentsProcedure } from './routers/documents/get-self-document
 import { deleteEmployeeDocumentProcedure } from './routers/documents/delete-employee-document.router';
 import { getReporteeDocumentsProcedure } from './routers/documents/get-reportee-documents.router';
 import { updateDocumentStatusProcedure } from './routers/documents/update-document-status.router';
+import { deleteEmployeeImageProcedure } from './routers/photos/delete-image.router';
 
 /**
  * Vodichron HRMS Employee tRPC Router
@@ -40,6 +41,7 @@ import { updateDocumentStatusProcedure } from './routers/documents/update-docume
  * - deleteEmployeeDocument: Delete employee document (self OR HR/SuperUser)
  * - getReporteeDocuments: Fetch employee documents for HR approval (paginated)
  * - updateDocumentStatus: Update HR approval status (HR/SuperUser only)
+ * - deleteEmployeeImage: Delete employee photo (self OR HR/SuperUser)
  */
 export const employeeRouter = router({
   getById: getByIdProcedure,
@@ -56,4 +58,5 @@ export const employeeRouter = router({
   deleteEmployeeDocument: deleteEmployeeDocumentProcedure,
   getReporteeDocuments: getReporteeDocumentsProcedure,
   updateDocumentStatus: updateDocumentStatusProcedure,
+  deleteEmployeeImage: deleteEmployeeImageProcedure,
 });
