@@ -17,6 +17,7 @@ import { deleteEmployeeDocumentExpressController } from '../controllers/document
 import { downloadEmployeeDocumentExpressController } from '../controllers/documents/download-employee-document.controller';
 import { getReporteeDocumentsExpressController } from '../controllers/documents/get-reportee-documents.controller';
 import { updateDocumentStatusExpressController } from '../controllers/documents/update-document-status.controller';
+import { uploadPhotoExpressController } from '../controllers/photos/upload-photo.controller';
 import { upload } from '../../../middleware/upload.middleware';
 
 /**
@@ -380,10 +381,36 @@ logger.info('✅ Employee route registered: POST /employees/all/documents');
 router.patch('/document/approve/:docid', authenticateJWT, updateDocumentStatusExpressController);
 logger.info('✅ Employee route registered: PATCH /employees/document/approve/:docid');
 
+/**
+ * POST /photo/upload
+ * ------------------
+ * Upload employee photo
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can only upload their own photo)
+ * - Service layer enforces userId === logged-in user
+ * 
+ * Request:
+ * - Content-Type: multipart/form-data
+ * - Fields: userId (UUID), fileupload (image file)
+ * 
+ * File Upload:
+ * - Handled by multer middleware (upload.single('fileupload'))
+ * - Max file size: 10MB
+ * - Stored in: {assetPath}/employee_documents/
+ * 
+ * Old route: POST /employee/photo/upload
+ */
+router.post(
+  '/photo/upload',
+  authenticateJWT,
+  upload.single('fileupload'),
+  uploadPhotoExpressController
+);
+logger.info('✅ Employee route registered: POST /employees/photo/upload');
 
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
-// - POST /photo/upload
 // - GET /image/:id
 // - DELETE /image/:id
 
