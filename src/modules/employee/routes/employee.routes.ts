@@ -18,6 +18,7 @@ import { downloadEmployeeDocumentExpressController } from '../controllers/docume
 import { getReporteeDocumentsExpressController } from '../controllers/documents/get-reportee-documents.controller';
 import { updateDocumentStatusExpressController } from '../controllers/documents/update-document-status.controller';
 import { uploadPhotoExpressController } from '../controllers/photos/upload-photo.controller';
+import { getImageExpressController } from '../controllers/photos/get-image.controller';
 import { upload } from '../../../middleware/upload.middleware';
 
 /**
@@ -409,9 +410,30 @@ router.post(
 );
 logger.info('✅ Employee route registered: POST /employees/photo/upload');
 
+/**
+ * GET /image/:id
+ * -------------
+ * Get employee photo as image file
+ * 
+ * Authorization:
+ * - Any authenticated user can view any employee's photo
+ * - No explicit authorization (public within organization)
+ * 
+ * URL Parameter:
+ * - id: Employee UUID
+ * 
+ * Response:
+ * - Binary image file (JPEG, PNG, etc.)
+ * - Or default nouser.png if no photo uploaded
+ * - Content-Type set automatically based on file type
+ * 
+ * Old route: GET /employee/image/:id
+ */
+router.get('/image/:id', authenticateJWT, getImageExpressController);
+logger.info('✅ Employee route registered: GET /employees/image/:id');
+
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
-// - GET /image/:id
 // - DELETE /image/:id
 
 export default router;
