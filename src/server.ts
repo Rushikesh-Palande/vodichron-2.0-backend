@@ -5,6 +5,7 @@ import { logger, logSystem } from './utils/logger';
 import { connectDatabase, syncDatabase, closeDatabase } from './database';
 import { performDatabaseHealthCheck } from './utils/db-health-check';
 import { runAllSeeds } from './seeds/master-seed-runner';
+import { startAllCronJobs, stopAllCronJobs } from './cron-jobs/master-cron-runner';
 
 /**
  * Vodichron HRMS Backend Server Entry Point
@@ -54,6 +55,10 @@ const gracefulShutdown = async (signal: string, server: any) => {
   }, 15000); // 15 seconds timeout
 
   try {
+    // Stop cron jobs first
+    logger.info('⏰ Stopping cron jobs...');
+    stopAllCronJobs();
+    
     // Stop accepting new connections
     logger.info('🔒 Stopping server from accepting new connections...');
     server.close(async (error: any) => {
@@ -131,7 +136,12 @@ const startServer = async (): Promise<void> => {
     await runAllSeeds();
     logger.info('✅ Database seeding completed');
 
-    // Step 6: Create HTTP server
+    // Step 6: Start cron jobs (automated tasks)
+    logger.info('⏰ Starting cron jobs...');
+    await startAllCronJobs();
+    logger.info('✅ Cron jobs started successfully');
+
+    // Step 7: Create HTTP server
     logger.info('🌐 Creating HTTP server...');
     httpServer = createServer(app);
 
