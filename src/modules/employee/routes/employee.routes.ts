@@ -20,6 +20,7 @@ import { updateDocumentStatusExpressController } from '../controllers/documents/
 import { uploadPhotoExpressController } from '../controllers/photos/upload-photo.controller';
 import { getImageExpressController } from '../controllers/photos/get-image.controller';
 import { deleteImageExpressController } from '../controllers/photos/delete-image.controller';
+import { unifiedRegisterExpressController } from '../controllers/unified/unified-register.controller';
 import { upload } from '../../../middleware/upload.middleware';
 
 /**
@@ -126,6 +127,27 @@ logger.info('✅ Employee route registered: POST /employees/list');
  */
 router.post('/register', authenticateJWT, createEmployeeExpressController);
 logger.info('✅ Employee route registered: POST /employees/register');
+
+/**
+ * POST /unified-register
+ * ----------------------
+ * Unified employee + user registration (atomic operation)
+ * Creates both employee record AND user account in one transaction
+ * 
+ * This is for the frontend unified registration page that collects:
+ * - Employee data (Tabs 1-5)
+ * - User registration data (Tab 6 - Grant Access)
+ * 
+ * Note: File uploads (photo, documents) happen AFTER via separate endpoints
+ * 
+ * Authorization:
+ * - ADMIN_USERS only (super_user, hr)
+ * - Only SuperUsers can create other SuperUsers
+ * 
+ * Returns: { employeeUuid, userUuid }
+ */
+router.post('/unified-register', authenticateJWT, unifiedRegisterExpressController);
+logger.info('✅ Employee route registered: POST /employees/unified-register');
 
 /**
  * POST /exists

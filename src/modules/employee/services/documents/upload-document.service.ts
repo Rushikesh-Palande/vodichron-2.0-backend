@@ -126,13 +126,20 @@ export async function uploadEmployeeDocument(
     // ==========================================================================
     // STEP 3: Validate Authorization
     // ==========================================================================
-    // Matches old code lines 314-317
-    // IMPORTANT: Employees can ONLY upload documents for themselves
-    if (input.userId !== user.uuid) {
+    // Matches old code lines 314-317 with enhancement for HR registration
+    // IMPORTANT: 
+    // - Regular employees can ONLY upload documents for themselves
+    // - HR, admin, super_user can upload documents for any employee (for registration)
+    const privilegedRoles = ['super_user', 'admin', 'hr'];
+    const isPrivilegedUser = privilegedRoles.includes(user.role);
+    const isUploadingForSelf = input.userId === user.uuid;
+
+    if (!isUploadingForSelf && !isPrivilegedUser) {
       logger.warn('⛔ Unauthorized document upload attempt', {
         requestedFor: input.userId,
         attemptedBy: user.uuid,
-        reason: 'User attempting to upload document for another employee'
+        userRole: user.role,
+        reason: 'User attempting to upload document for another employee without privilege'
       });
 
       // Delete uploaded file (security cleanup)
@@ -142,6 +149,14 @@ export async function uploadEmployeeDocument(
 
       throw new Error('Access denied - You can only upload documents for yourself');
     }
+
+    logger.debug('✅ Authorization check passed', {
+      requestedFor: input.userId,
+      attemptedBy: user.uuid,
+      userRole: user.role,
+      isPrivileged: isPrivilegedUser,
+      isSelf: isUploadingForSelf
+    });
 
     // ==========================================================================
     // STEP 4: Prepare File Storage

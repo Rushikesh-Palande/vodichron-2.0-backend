@@ -15,6 +15,9 @@
  */
 
 import multer from 'multer';
+import { mkdirSync, existsSync } from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
 import config from '../config';
 import { logger } from '../utils/logger';
 
@@ -27,6 +30,12 @@ import { logger } from '../utils/logger';
  */
 const uploadPath = config.asset.path;
 
+// Ensure upload directory exists
+if (!existsSync(uploadPath)) {
+  mkdirSync(uploadPath, { recursive: true });
+  logger.info('📁 Created upload directory', { path: uploadPath });
+}
+
 const fileStorage = multer.diskStorage({
   // Destination: Where to store uploaded files temporarily
   destination(_req, _file, cb) {
@@ -34,12 +43,16 @@ const fileStorage = multer.diskStorage({
     cb(null, uploadPath);
   },
   
-  // Filename: Use original filename (service layer will rename with UUID)
+  // Filename: Use UUID to prevent race conditions when same file uploaded multiple times
   filename(_req, file, cb) {
+    const ext = path.extname(file.originalname);
+    const uniqueFilename = `${uuidv4()}${ext}`;
+    
     logger.debug('📄 Setting upload filename', { 
-      original: file.originalname 
+      original: file.originalname,
+      unique: uniqueFilename
     });
-    cb(null, file.originalname);
+    cb(null, uniqueFilename);
   },
 });
 

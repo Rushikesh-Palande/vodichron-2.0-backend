@@ -125,13 +125,18 @@ export async function uploadEmployeePhoto(
     // ==========================================================================
     // STEP 3: Validate Authorization
     // ==========================================================================
-    // Matches old code lines 429-432
-    // IMPORTANT: Employees can ONLY upload photos for themselves
-    if (input.userId !== user.uuid) {
+    // Authorization Rules:
+    // - Employees can only upload their own photo
+    // - HR and super_user can upload photos for any employee
+    const isPrivilegedUser = user.role === 'super_user' || user.role === 'hr';
+    const isUploadingForSelf = input.userId === user.uuid;
+    
+    if (!isUploadingForSelf && !isPrivilegedUser) {
       logger.warn('⛔ Unauthorized photo upload attempt', {
         requestedFor: input.userId,
         attemptedBy: user.uuid,
-        reason: 'User attempting to upload photo for another employee'
+        userRole: user.role,
+        reason: 'User attempting to upload photo for another employee without proper permissions'
       });
 
       // Delete uploaded file (security cleanup)
@@ -141,6 +146,14 @@ export async function uploadEmployeePhoto(
 
       throw new Error('Access denied - You can only upload your own photo');
     }
+    
+    logger.debug('✅ Authorization check passed', {
+      requestedFor: input.userId,
+      attemptedBy: user.uuid,
+      userRole: user.role,
+      isPrivileged: isPrivilegedUser,
+      isSelf: isUploadingForSelf
+    });
 
     // ==========================================================================
     // STEP 4: Prepare File Storage

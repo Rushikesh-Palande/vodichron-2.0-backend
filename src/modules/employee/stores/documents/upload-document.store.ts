@@ -127,14 +127,18 @@ export async function insertEmployeeDocument(
         employeeId,
         documentType,
         fileName,
+        createdAt,
         createdBy,
+        updatedAt,
         updatedBy
       ) VALUES (
         :uuid,
         :employeeId,
         :documentType,
         :fileName,
+        NOW(),
         :createdBy,
+        NOW(),
         :updatedBy
       )
     `;
