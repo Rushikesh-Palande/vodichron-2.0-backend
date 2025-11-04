@@ -45,14 +45,15 @@ export function getResetPasswordEmailTemplate(data: ResetPasswordEmailData) {
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
           
-          <!-- Header with gradient background -->
+          <!-- Header with gradient background and logo -->
           <tr>
             <td style="background: linear-gradient(135deg, #F26A21 0%, #E64A2E 100%); padding: 40px 30px; text-align: center;">
+              <img src="cid:vodichron-logo" alt="Vodichron" style="max-width: 180px; height: auto; margin-bottom: 16px;" />
               <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600; letter-spacing: 0.5px;">
-                🔐 VODICHRON
+                🔐 Password Reset
               </h1>
               <p style="color: rgba(255, 255, 255, 0.95); margin: 8px 0 0 0; font-size: 14px; letter-spacing: 0.3px;">
-                Resource Management System
+                Vodichron Resource Management System
               </p>
             </td>
           </tr>

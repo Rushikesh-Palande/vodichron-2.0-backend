@@ -7,6 +7,7 @@
  * Authorization checks (Admin/HR/SuperUser only) are done in service layer.
  */
 
+import path from 'path';
 import { protectedProcedure } from '../../../../trpc/trpc';
 import { logger } from '../../../../utils/logger';
 import { registerUserInputSchema } from '../../schemas/register-user.schemas';
@@ -18,6 +19,9 @@ import {
 } from '../../store/registration/register-user.store';
 import { ApplicationUserRole } from '../../schemas/register-user.schemas';
 import { TRPCError } from '@trpc/server';
+import { sendEmail } from '../../../../services/email.service';
+import { getWelcomeEmailTemplate } from '../../templates/welcome-email.template';
+import { config } from '../../../../config';
 
 /**
  * Register User tRPC Procedure
@@ -89,10 +93,13 @@ export const registerUserProcedure = protectedProcedure
         });
       }
       
-      // Step 4: Hash password
+      // Step 4: Store plain password for email (before hashing)
+      const plainPassword = input.password;
+      
+      // Step 5: Hash password
       const hashedPassword = await hashPassword(input.password);
       
-      // Step 5: Insert user into database
+      // Step 6: Insert user into database
       const userUuid = await insertApplicationUser(
         {
           employeeId: input.employeeId,
@@ -102,7 +109,6 @@ export const registerUserProcedure = protectedProcedure
         loggedInUserEmail || 'system'
       );
       
-      // Step 6: Return success response
       logger.info('✅ User registered successfully via tRPC', { 
         userUuid,
         employeeId: input.employeeId,
@@ -111,9 +117,61 @@ export const registerUserProcedure = protectedProcedure
         type: 'USER_REGISTRATION_TRPC_SUCCESS' 
       });
       
+      // Step 7: Send welcome email with credentials
+      try {
+        // Ensure employee has an official email
+        if (!employee.officialEmailId) {
+          throw new Error('Employee does not have an official email address');
+        }
+        
+        logger.info('📧 Sending welcome email with credentials (tRPC)', {
+          to: employee.officialEmailId,
+          employeeName: employee.name
+        });
+        
+        const loginUrl = config.frontendUrl || 'http://localhost:3000';
+        const emailTemplate = getWelcomeEmailTemplate({
+          employeeName: employee.name,
+          officialEmail: employee.officialEmailId,
+          temporaryPassword: plainPassword,
+          loginUrl,
+          role: input.role,
+        });
+        
+        // Get absolute path to logo
+        const logoPath = path.resolve(process.cwd(), config.asset.path, 'Vodichron-logo.png');
+        
+        await sendEmail({
+          to: employee.officialEmailId,
+          subject: emailTemplate.subject,
+          html: emailTemplate.template,
+          attachments: [
+            {
+              filename: 'vodichron-logo.png',
+              path: logoPath,
+              cid: 'vodichron-logo', // Content ID for embedding in HTML
+            },
+          ],
+        });
+        
+        logger.info('✅ Welcome email sent successfully (tRPC)', {
+          to: employee.officialEmailId,
+          userUuid
+        });
+      } catch (emailError: any) {
+        // Log email error but don't fail the registration
+        logger.error('❌ Failed to send welcome email (user created successfully - tRPC)', {
+          error: emailError.message,
+          userUuid,
+          employeeEmail: employee.officialEmailId,
+        });
+        // Don't throw - registration was successful, email is secondary
+      }
+      
+      // Step 8: Return success response
       return {
         success: true,
-        message: 'User details saved successfully',
+        message: 'User details saved successfully. Welcome email sent to employee.',
         data: {
           userUuid,
         },

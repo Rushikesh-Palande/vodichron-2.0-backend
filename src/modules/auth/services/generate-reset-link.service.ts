@@ -24,6 +24,7 @@ import { findEmployeeByOfficialEmail, findCustomerByEmail, findUserByEmployeeUui
 import { createPasswordResetRequest } from '../store/password-reset.store';
 import { encrypt } from '../../employee/helpers/encrypt.helper';
 import { generateRandomString } from '../helpers/generate-random-string.helper';
+import path from 'path';
 import { sendEmail } from '../../../services/email.service';
 import { getResetPasswordEmailTemplate } from '../templates/reset-password-email.template';
 
@@ -128,14 +129,24 @@ export async function generateResetLinkService(username: string, clientIp?: stri
       expiresInMinutes: 15
     });
 
-    // Step 7: Send email
+    // Step 7: Send email with logo
     logger.debug('📧 Step 7: Sending password reset email');
     const emailTemplate = getResetPasswordEmailTemplate({ passwordResetUrl: resetUrl });
+    
+    // Get absolute path to logo
+    const logoPath = path.resolve(process.cwd(), config.asset.path, 'Vodichron-logo.png');
     
     await sendEmail({
       to: username,
       subject: emailTemplate.subject,
       html: emailTemplate.template,
+      attachments: [
+        {
+          filename: 'vodichron-logo.png',
+          path: logoPath,
+          cid: 'vodichron-logo', // Content ID for embedding in HTML
+        },
+      ],
     });
 
     logger.info('✅ Step 7.1: Password reset email sent successfully', {

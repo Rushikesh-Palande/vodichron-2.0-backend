@@ -93,6 +93,7 @@ export interface EmailOptions {
     filename: string;
     content?: string | Buffer;
     path?: string;
+    cid?: string;                // Content ID for inline images (e.g., 'logo' -> <img src="cid:logo">)
   }>;
 }
 
