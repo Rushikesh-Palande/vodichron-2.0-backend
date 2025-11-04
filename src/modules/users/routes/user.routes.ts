@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { logger } from '../../../utils/logger';
 import { getUserProfileExpressController } from '../controllers/profile.controller';
 import { registerUserExpressController } from '../controllers/register-user.controller';
+import { getApplicationUsersListExpressController } from '../controllers/user-list.controller';
 import { authenticateJWT } from '../../../middleware/auth.middleware';
 
 const router = Router();
@@ -34,5 +35,18 @@ logger.info('✅ User route registered: GET /user/profile');
  */
 router.post('/register', authenticateJWT, registerUserExpressController);
 logger.info('✅ User route registered: POST /user/register');
+
+/**
+ * POST /list
+ * ==========
+ * Get paginated list of application users with optional filters.
+ * Requires JWT authentication.
+ * All authenticated users can view, but role-based access control applies:
+ * - Super users can see all users including other super users
+ * - Non-super users cannot see super users in results
+ * Based on old backend: POST /user/list
+ */
+router.post('/list', authenticateJWT, getApplicationUsersListExpressController);
+logger.info('✅ User route registered: POST /user/list');
 
 export default router;
