@@ -43,14 +43,18 @@ export async function handleGetUserProfile(req: Request, res: Response) {
 
     // Step 2: Fetch employee details if user is an employee
     let employeeName = null;
+    let recentPhotograph = null;
+    let employeeUuid = null;
     if (user.type === 'employee') {
       // user.uuid is from application_users table, need to get employeeId first
       const appUser = await User.findOne({ where: { uuid: user.uuid } });
       if (appUser && appUser.employeeId) {
-        // Now fetch employee by employeeId
+        // Now fetch employee by employeeId (which is the employee UUID)
+        employeeUuid = appUser.employeeId;
         const employee = await getEmployeeByUuidWithManagerDetail(appUser.employeeId);
         if (employee) {
           employeeName = employee.name;
+          recentPhotograph = employee.recentPhotograph;
         }
       }
     }
@@ -61,6 +65,7 @@ export async function handleGetUserProfile(req: Request, res: Response) {
       userUuid: user.uuid,
       userRole: user.role,
       employeeName,
+      hasPhoto: !!recentPhotograph,
       duration: `${duration}ms`
     });
 
@@ -69,11 +74,13 @@ export async function handleGetUserProfile(req: Request, res: Response) {
       duration
     }, undefined, user.uuid);
 
-    // Return user data with employee name
+    // Return user data with employee name, photo, and employee UUID
     return res.status(200).json({
       data: {
         ...user,
-        name: employeeName
+        name: employeeName,
+        recentPhotograph,
+        employeeUuid
       }
     });
 

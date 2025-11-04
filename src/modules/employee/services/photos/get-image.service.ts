@@ -93,11 +93,16 @@ export async function getEmployeeImage(
     // STEP 4: Determine File Path
     // ==========================================================================
     // Matches old code lines 464-468
+    // res.sendFile requires absolute paths, so resolve relative paths
     const fileName = employeeInfo.recentPhotograph;
-    let filePath = path.join(config.assetPath, 'nouser.png'); // Default image
+    const assetPath = path.isAbsolute(config.assetPath) 
+      ? config.assetPath 
+      : path.resolve(process.cwd(), config.assetPath);
+    
+    let filePath = path.join(assetPath, 'nouser.png'); // Default image
 
     if (fileName) {
-      filePath = path.join(config.assetPath, 'employee_documents', fileName);
+      filePath = path.join(assetPath, 'employee_documents', fileName);
     }
 
     logger.info('📁 Serving employee image', {

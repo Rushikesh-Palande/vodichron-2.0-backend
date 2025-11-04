@@ -26,8 +26,10 @@ export const getProfileProcedure = protectedProcedure.query(async ({ ctx }) => {
       operation: 'getUserProfile_trpc'
     });
 
-    // Fetch employee name if user is an employee
+    // Fetch employee details if user is an employee
     let employeeName = null;
+    let recentPhotograph = null;
+    let employeeUuid = null;
     if (ctx.user.type === 'employee') {
       // ctx.user.uuid is from application_users table, need to get employeeId first
       const appUser = await User.findOne({ where: { uuid: ctx.user.uuid } });
@@ -39,6 +41,9 @@ export const getProfileProcedure = protectedProcedure.query(async ({ ctx }) => {
       });
       
       if (appUser && appUser.employeeId) {
+        // Store the employee UUID
+        employeeUuid = appUser.employeeId;
+        
         // Now fetch employee by employeeId
         const employee = await getEmployeeByUuidWithManagerDetail(appUser.employeeId);
         
@@ -50,6 +55,7 @@ export const getProfileProcedure = protectedProcedure.query(async ({ ctx }) => {
         
         if (employee) {
           employeeName = employee.name;
+          recentPhotograph = employee.recentPhotograph;
         } else {
           logger.warn('⚠️ Employee record not found for user', {
             userUuid: ctx.user.uuid,
@@ -64,12 +70,14 @@ export const getProfileProcedure = protectedProcedure.query(async ({ ctx }) => {
       }
     }
 
-    // Return user data with employee name
+    // Return user data with employee name, photo, and employee UUID
     return {
       success: true,
       data: {
         ...ctx.user,
-        name: employeeName
+        name: employeeName,
+        recentPhotograph,
+        employeeUuid
       },
       timestamp: new Date().toISOString()
     };
