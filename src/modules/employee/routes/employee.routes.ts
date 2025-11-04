@@ -16,6 +16,7 @@ import { getSelfDocumentsExpressController } from '../controllers/documents/get-
 import { deleteEmployeeDocumentExpressController } from '../controllers/documents/delete-employee-document.controller';
 import { downloadEmployeeDocumentExpressController } from '../controllers/documents/download-employee-document.controller';
 import { getReporteeDocumentsExpressController } from '../controllers/documents/get-reportee-documents.controller';
+import { updateDocumentStatusExpressController } from '../controllers/documents/update-document-status.controller';
 import { upload } from '../../../middleware/upload.middleware';
 
 /**
@@ -354,12 +355,36 @@ logger.info('✅ Employee route registered: GET /employees/document/download/:em
 router.post('/all/documents', authenticateJWT, getReporteeDocumentsExpressController);
 logger.info('✅ Employee route registered: POST /employees/all/documents');
 
+/**
+ * PATCH /document/approve/:docid
+ * ------------------------------
+ * Update HR approval status for employee document
+ * 
+ * Authorization:
+ * - ONLY HR/SuperUser roles
+ * - Service layer enforces authorization
+ * 
+ * URL Parameter:
+ * - docid: Document UUID
+ * 
+ * Request Body:
+ * - approvalStatus: 'APPROVED' | 'REJECTED'
+ * - comment: string (HR comments)
+ * 
+ * Response:
+ * - success: boolean
+ * - message: string
+ * 
+ * Old route: PATCH /employee/document/approve/:docid
+ */
+router.patch('/document/approve/:docid', authenticateJWT, updateDocumentStatusExpressController);
+logger.info('✅ Employee route registered: PATCH /employees/document/approve/:docid');
+
 
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
 // - POST /photo/upload
 // - GET /image/:id
 // - DELETE /image/:id
-// - PATCH /document/approve/:docid
 
 export default router;
