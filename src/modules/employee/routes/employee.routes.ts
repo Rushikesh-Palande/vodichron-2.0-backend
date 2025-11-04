@@ -15,6 +15,7 @@ import { uploadDocumentExpressController } from '../controllers/documents/upload
 import { getSelfDocumentsExpressController } from '../controllers/documents/get-self-documents.controller';
 import { deleteEmployeeDocumentExpressController } from '../controllers/documents/delete-employee-document.controller';
 import { downloadEmployeeDocumentExpressController } from '../controllers/documents/download-employee-document.controller';
+import { getReporteeDocumentsExpressController } from '../controllers/documents/get-reportee-documents.controller';
 import { upload } from '../../../middleware/upload.middleware';
 
 /**
@@ -331,13 +332,34 @@ logger.info('✅ Employee route registered: DELETE /employees/document/:empid/:d
 router.get('/document/download/:empid/:docid', authenticateJWT, downloadEmployeeDocumentExpressController);
 logger.info('✅ Employee route registered: GET /employees/document/download/:empid/:docid');
 
+/**
+ * POST /all/documents
+ * ------------------
+ * Get employee documents for HR approval (paginated)
+ * 
+ * Authorization:
+ * - Intended for HR/SuperUser roles
+ * - No explicit auth check in service (middleware handles it)
+ * 
+ * Request Body:
+ * - pagination: { page?: number, pageLimit?: number }
+ * - filters?: { hrApprovalStatus?: 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'PENDING' }
+ * 
+ * Response:
+ * - Array of documents with employee name and HR approval details
+ * - Excludes logged-in user's own documents
+ * 
+ * Old route: POST /employee/all/documents
+ */
+router.post('/all/documents', authenticateJWT, getReporteeDocumentsExpressController);
+logger.info('✅ Employee route registered: POST /employees/all/documents');
+
 
 // TODO: Add more routes here as controllers are implemented
 // Following the pattern from old vodichron:
 // - POST /photo/upload
 // - GET /image/:id
 // - DELETE /image/:id
-// - POST /all/documents
 // - PATCH /document/approve/:docid
 
 export default router;
