@@ -10,7 +10,6 @@
  * - Only returns employees WITHOUT application_users record (NOT EXISTS)
  * - Exclude specific users
  * - Returns max 10 results (LIMIT 10)
- * - HMI-style step-by-step comments
  * - Performance monitoring
  * - Comprehensive logging
  * 

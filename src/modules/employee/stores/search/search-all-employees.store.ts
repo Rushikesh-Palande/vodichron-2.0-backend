@@ -8,7 +8,6 @@
  * - Search by name OR email (LIKE keyword%)
  * - Exclude specific users
  * - Returns max 10 results (LIMIT 10)
- * - HMI-style step-by-step comments
  * - Performance monitoring
  * - Comprehensive logging
  * 

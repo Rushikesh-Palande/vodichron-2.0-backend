@@ -8,7 +8,6 @@
  * Key Features:
  * - Raw SQL queries for performance optimization
  * - Role-based filtering with security checks
- * - HMI-style step-by-step comments
  * - Database performance monitoring with timers
  * - Comprehensive error logging
  * - Type-safe return values

@@ -11,7 +11,6 @@
  * Key Features:
  * - Deletes employee record from database
  * - Deletes associated application_users record
- * - HMI-style step-by-step comments
  * - Database performance monitoring with timers
  * - Comprehensive error logging
  * - Transaction safety
