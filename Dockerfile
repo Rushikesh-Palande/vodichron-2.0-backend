@@ -20,8 +20,8 @@ RUN apk update && apk upgrade --no-cache && \
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies with security audit
-RUN npm ci && npm audit fix --production
+    # Install dependencies
+    RUN npm ci
 
 # Copy source code
 COPY src ./src
