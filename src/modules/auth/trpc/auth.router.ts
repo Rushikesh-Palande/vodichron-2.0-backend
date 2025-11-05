@@ -8,6 +8,10 @@ import {
   PerformanceTimer 
 } from '../../../utils/logger';
 import { loginSchema } from '../schemas/auth.schemas';
+import { 
+  ACCESS_TOKEN_EXPIRES_IN, 
+  REFRESH_TOKEN_MAX_AGE_MS 
+} from '../constants/auth.constants';
 import { comparePasswords } from '../helpers/compare-passwords';
 import { generateToken } from '../helpers/generate-token';
 import { generateRefreshToken } from '../helpers/generate-refresh-token';
@@ -105,10 +109,10 @@ export const authRouter = router({
         // Log security event for login attempt
         logSecurity('LOGIN_ATTEMPT', 'low', { username, userAgent }, ip || undefined);
         
-        // Step 3: Define authentication constants
-        const REFRESH_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-        const ACCESS_EXPIRES_IN = '30m'; // Match old vodichron session duration
-        logger.info('⚙️ Step 3: Token configuration set - Access: 15m, Refresh: 7d');
+        // Step 3: Use authentication constants from centralized config
+        const REFRESH_MAX_AGE_MS = REFRESH_TOKEN_MAX_AGE_MS;
+        const ACCESS_EXPIRES_IN = ACCESS_TOKEN_EXPIRES_IN;
+        logger.info(`⚙️ Step 3: Token configuration set - Access: ${ACCESS_EXPIRES_IN}, Refresh: ${REFRESH_MAX_AGE_MS}ms`);
 
         // Step 4: Employee authentication path
         logger.info('🔍 Step 4: Checking employee authentication path...');
@@ -230,10 +234,17 @@ export const authRouter = router({
         const accessToken = generateToken({ uuid: customer.uuid, role: 'customer', email: customer.email, type: 'customer' });
         const { token: refreshToken, hash } = generateRefreshToken();
           const dbTimer = new PerformanceTimer('Create Session - Customer');
-        await createSession({ subjectId: customer.uuid, subjectType: 'customer', tokenHash: hash, userAgent, ipAddress: ip, expiresAt: new Date(Date.now() + REFRESH_MAX_AGE_MS) });
+          await createSession({ 
+            subjectId: customer.uuid, 
+            subjectType: 'customer', 
+            tokenHash: hash, 
+            userAgent, 
+            ipAddress: ip, 
+            expiresAt: new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS) 
+          });
           dbTimer.end();
           logDatabase('INSERT', 'sessions', undefined, undefined, 1);
-        res.cookie('refreshToken', refreshToken, getRefreshCookieOptions(REFRESH_MAX_AGE_MS));
+        res.cookie('refreshToken', refreshToken, getRefreshCookieOptions(REFRESH_TOKEN_MAX_AGE_MS));
           logger.info('✅ Step 11.1: Tokens generated and session created');
           
           // Log successful customer authentication
@@ -361,19 +372,18 @@ export const authRouter = router({
           
           // Step 4: Generate new tokens
           logger.info('🎫 Step 4: Generating new access token...');
-          const accessToken = generateToken({ uuid: user?.uuid || session.subjectId, role: (user?.role as any) || 'employee', type: 'employee' });
-          const { token: newRefresh, hash } = generateRefreshToken();
-          logger.info('✅ Step 4.1: New tokens generated');
+            const accessToken = generateToken({ uuid: user?.uuid || session.subjectId, role: (user?.role as any) || 'employee', type: 'employee' });
+            const { token: newRefresh, hash } = generateRefreshToken();
+            const newExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
           
           // Step 5: Update session
           logger.info('📄 Step 5: Updating session record...');
           const dbTimer = new PerformanceTimer('Update Session - Employee');
-          const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
           await updateSessionToken(tokenHash, hash, newExpiry);
           dbTimer.end();
           logDatabase('UPDATE', 'sessions', undefined, undefined, 1);
           
-          res.cookie('refreshToken', newRefresh, getRefreshCookieOptions(7 * 24 * 60 * 60 * 1000));
+            res.cookie('refreshToken', newRefresh, getRefreshCookieOptions(REFRESH_TOKEN_MAX_AGE_MS));
           logger.info('✅ Step 5.1: Session updated and cookie set');
           
           // Log successful token refresh
@@ -385,7 +395,7 @@ export const authRouter = router({
           return {
             success: true, 
             message: 'Session extended', 
-            data: { token: accessToken, tokenType: 'Bearer', expiresIn: '30m' },
+            data: { token: accessToken, tokenType: 'Bearer', expiresIn: ACCESS_TOKEN_EXPIRES_IN },
             timestamp: new Date().toISOString() 
           };
           
@@ -394,19 +404,18 @@ export const authRouter = router({
           
           // Step 4: Generate new tokens
           logger.info('🎫 Step 4: Generating new access token...');
-          const accessToken = generateToken({ uuid: session.subjectId, role: 'customer', type: 'customer' });
-          const { token: newRefresh, hash } = generateRefreshToken();
-          logger.info('✅ Step 4.1: New tokens generated');
+            const accessToken = generateToken({ uuid: session.subjectId, role: 'customer', type: 'customer' });
+            const { token: newRefresh, hash } = generateRefreshToken();
+            const newExpiry = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
           
           // Step 5: Update session
           logger.info('📄 Step 5: Updating session record...');
           const dbTimer = new PerformanceTimer('Update Session - Customer');
-          const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
           await updateSessionToken(tokenHash, hash, newExpiry);
           dbTimer.end();
           logDatabase('UPDATE', 'sessions', undefined, undefined, 1);
           
-          res.cookie('refreshToken', newRefresh, getRefreshCookieOptions(7 * 24 * 60 * 60 * 1000));
+            res.cookie('refreshToken', newRefresh, getRefreshCookieOptions(REFRESH_TOKEN_MAX_AGE_MS));
           logger.info('✅ Step 5.1: Session updated and cookie set');
           
           // Log successful token refresh
@@ -418,7 +427,7 @@ export const authRouter = router({
           return {
             success: true, 
             message: 'Session extended', 
-            data: { token: accessToken, tokenType: 'Bearer', expiresIn: '30m' },
+            data: { token: accessToken, tokenType: 'Bearer', expiresIn: ACCESS_TOKEN_EXPIRES_IN },
             timestamp: new Date().toISOString() 
           };
         }

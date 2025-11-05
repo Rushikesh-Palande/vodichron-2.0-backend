@@ -1,0 +1,908 @@
+{
+	"info": {
+		"_postman_id": "vodichron-rest-collection",
+		"name": "Vodichron HRMS - REST API",
+		"description": "Comprehensive REST API collection for Vodichron HRMS with complete test coverage.\n\n## Overview\n- Base URL: http://localhost:5000/api\n- Authentication: JWT Bearer token (where required)\n- All authenticated endpoints require Authorization header\n\n## Modules\n1. **Auth** - Authentication, session management\n2. **Employee** - Employee CRUD, email validation\n3. **User** - User profile management\n4. **Health** - System health checks\n\n## Test Coverage\n✅ Success scenarios\n❌ Error scenarios (validation, unauthorized, forbidden, not found)\n🔄 Edge cases\n\n## Variables\n- `base_url` - Server URL (default: http://localhost:5000)\n- `access_token` - JWT token (auto-set after login)\n- `employee_uuid` - Employee UUID (auto-set after login)\n\n## Credentials (from seed data)\n- Email: rushikesh@embedsquare.com\n- Password: Embed@123",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Health & System",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has status field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.equal('UP');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "**Health Check Endpoint**\n\nChecks if the server is running and database is connected.\n\n**Test Coverage:**\n- Server availability\n- Database connectivity\n- System uptime"
+					},
+					"response": []
+				},
+				{
+					"name": "Auth System Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Auth system is active\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.status).to.equal('active');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/auth/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "status"]
+						},
+						"description": "**Auth System Status**\n\nReturns authentication system configuration and available endpoints."
+					},
+					"response": []
+				},
+				{
+					"name": "Employee System Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Employee system is active\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.status).to.equal('active');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/employees/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "status"]
+						},
+						"description": "**Employee System Status**\n\nReturns employee module configuration and implemented features."
+					},
+					"response": []
+				}
+			],
+			"description": "## Health & System Module\n\nSystem health checks and module status endpoints."
+		},
+		{
+			"name": "2. Authentication",
+			"item": [
+				{
+					"name": "Login - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.accessToken).to.exist;",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.data.accessToken);",
+									"});",
+									"",
+									"pm.test(\"Response has user data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.user).to.exist;",
+									"    pm.expect(jsonData.data.user.uuid).to.exist;",
+									"    pm.collectionVariables.set(\"employee_uuid\", jsonData.data.user.employeeId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"rushikesh@embedsquare.com\",\n  \"password\": \"Embed@123\",\n  \"userType\": \"employee\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "**Success Case: Employee Login**\n\n**Test Coverage:**\n- Valid credentials\n- Returns access token\n- Returns user profile\n- Sets refresh token cookie\n- Updates last login timestamp\n- Sets online status"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Error (Invalid Password)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"pm.test(\"Error message indicates invalid credentials\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('Invalid');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"rushikesh@embedsquare.com\",\n  \"password\": \"WrongPassword123\",\n  \"userType\": \"employee\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "**Error Case: Invalid Password**\n\n**Test Coverage:**\n- Wrong password\n- Returns 401 Unauthorized\n- Security event logged\n- No token issued"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Error (User Not Found)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Error message indicates user not found\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('not found');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"nonexistent@example.com\",\n  \"password\": \"Embed@123\",\n  \"userType\": \"employee\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "**Error Case: User Not Found**\n\n**Test Coverage:**\n- Non-existent email\n- Returns 404 Not Found\n- No credentials exposed"
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Error (Validation Failed)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error indicates validation failure\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"invalid-email\",\n  \"password\": \"123\",\n  \"userType\": \"employee\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "**Error Case: Validation Failed**\n\n**Test Coverage:**\n- Invalid email format\n- Password too short\n- Returns 400 Bad Request\n- Zod validation error"
+					},
+					"response": []
+				},
+				{
+					"name": "Extend Session - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has new access token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.accessToken).to.exist;",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.data.accessToken);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Cookie",
+								"value": "refreshToken=YOUR_REFRESH_TOKEN_HERE",
+								"description": "IMPORTANT: After login, go to Cookies tab in Postman, copy the refreshToken value, and paste it here"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/extend-session",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "extend-session"]
+						},
+						"description": "**Success Case: Extend Session**\n\n**Prerequisites:**\n- Valid refresh token in cookie\n\n**Test Coverage:**\n- Validates refresh token\n- Issues new access token\n- Rotates refresh token\n- Updates session timestamp"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response indicates success\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "logout"]
+						},
+						"description": "**Success Case: Logout**\n\n**Prerequisites:**\n- Valid access token\n\n**Test Coverage:**\n- Revokes refresh token\n- Clears cookies\n- Updates online status to OFFLINE\n- Logs security event"
+					},
+					"response": []
+				}
+			],
+			"description": "## Authentication Module\n\nUser authentication, session management, and logout functionality."
+		},
+		{
+			"name": "3. Employee Management",
+			"item": [
+				{
+					"name": "Get Employee By ID - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has employee data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.employee).to.exist;",
+									"    pm.expect(jsonData.data.employee.uuid).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/employees/{{employee_uuid}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "{{employee_uuid}}"]
+						},
+						"description": "**Success Case: Get Employee Profile**\n\n**Prerequisites:**\n- Valid access token\n- Valid employee UUID\n\n**Test Coverage:**\n- Fetches complete employee profile\n- Returns manager/director details\n- Decrypts sensitive fields\n- Role-based authorization"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee By ID - Error (Not Found)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/employees/00000000-0000-0000-0000-000000000000",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "00000000-0000-0000-0000-000000000000"]
+						},
+						"description": "**Error Case: Employee Not Found**\n\n**Test Coverage:**\n- Non-existent UUID\n- Returns 404\n- No data leaked"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee By ID - Error (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/employees/{{employee_uuid}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "{{employee_uuid}}"]
+						},
+						"description": "**Error Case: No Authentication**\n\n**Test Coverage:**\n- Missing JWT token\n- Returns 401 Unauthorized"
+					},
+					"response": []
+				},
+				{
+					"name": "List Employees - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has employees array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.employees).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"pagination\": {\n    \"page\": 1,\n    \"pageLimit\": 10\n  },\n  \"filters\": {}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employees/list",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "list"]
+						},
+						"description": "**Success Case: List Employees**\n\n**Prerequisites:**\n- Valid access token\n- Admin/HR/Manager/Director role\n\n**Test Coverage:**\n- Paginated response\n- Role-based filtering\n- Decrypted sensitive data"
+					},
+					"response": []
+				},
+				{
+					"name": "List Employees - With Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"pagination\": {\n    \"page\": 1,\n    \"pageLimit\": 10\n  },\n  \"filters\": {\n    \"department\": \"Administration\",\n    \"designation\": \"Super Administrator\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employees/list",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "list"]
+						},
+						"description": "**Success Case: List with Filters**\n\n**Test Coverage:**\n- Department filter\n- Designation filter\n- Combined filters"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has employee UUID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.employeeUuid).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"gender\": \"Male\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"contactNumber\": \"9876543210\",\n  \"personalEmail\": \"johndoe@example.com\",\n  \"employeeId\": \"EMP999\",\n  \"officialEmailId\": \"johndoe@hedsquare.com\",\n  \"dateOfJoining\": \"2024-01-01\",\n  \"reportingManagerId\": \"{{employee_uuid}}\",\n  \"designation\": \"Software Engineer\",\n  \"department\": \"Development\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employees/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "register"]
+						},
+						"description": "**Success Case: Create Employee**\n\n**Prerequisites:**\n- Valid access token\n- Super_user/Admin/HR role\n\n**Test Coverage:**\n- Creates employee record\n- Encrypts sensitive fields\n- Validates required fields\n- Returns employee UUID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee - Error (Duplicate Email)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message indicates duplicate\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include('already exists');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test User\",\n  \"gender\": \"Male\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"contactNumber\": \"9876543210\",\n  \"personalEmail\": \"rushikesh@embedsquare.com\",\n  \"employeeId\": \"EMP888\",\n  \"officialEmailId\": \"test@hedsquare.com\",\n  \"dateOfJoining\": \"2024-01-01\",\n  \"reportingManagerId\": \"{{employee_uuid}}\",\n  \"designation\": \"Software Engineer\",\n  \"department\": \"Development\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employees/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "register"]
+						},
+						"description": "**Error Case: Duplicate Email**\n\n**Test Coverage:**\n- Email already exists\n- Returns 400 Bad Request\n- No partial data created"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee - Error (Forbidden)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer REGULAR_EMPLOYEE_TOKEN",
+								"description": "Use a regular employee token (not admin)"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test User\",\n  \"gender\": \"Male\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"contactNumber\": \"9876543210\",\n  \"personalEmail\": \"newemployee@example.com\",\n  \"employeeId\": \"EMP777\",\n  \"officialEmailId\": \"newemployee@hedsquare.com\",\n  \"dateOfJoining\": \"2024-01-01\",\n  \"reportingManagerId\": \"{{employee_uuid}}\",\n  \"designation\": \"Software Engineer\",\n  \"department\": \"Development\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employees/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "register"]
+						},
+						"description": "**Error Case: Insufficient Permissions**\n\n**Test Coverage:**\n- Regular employee attempting to create\n- Returns 403 Forbidden\n- Only admin/HR/super_user allowed"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Employee Email Exists - True",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Email exists\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"rushikesh@embedsquare.com\",\n  \"emailType\": \"personalEmail\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employees/exists",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "exists"]
+						},
+						"description": "**Success Case: Email Exists**\n\n**Test Coverage:**\n- Checks if email exists\n- Returns boolean true\n- No authentication required\n- Used for form validation"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Employee Email Exists - False",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Email does not exist\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.false;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"nonexistent123456@example.com\",\n  \"emailType\": \"personalEmail\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employees/exists",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "exists"]
+						},
+						"description": "**Success Case: Email Does Not Exist**\n\n**Test Coverage:**\n- New email address\n- Returns boolean false\n- Safe to use for registration"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Official Email Exists",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"rushikesh@embedsquare.com\",\n  \"emailType\": \"officialEmailId\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/employees/exists",
+							"host": ["{{base_url}}"],
+							"path": ["api", "employees", "exists"]
+						},
+						"description": "**Success Case: Check Official Email**\n\n**Test Coverage:**\n- Official email type\n- Same endpoint, different field"
+					},
+					"response": []
+				}
+			],
+			"description": "## Employee Management Module\n\nEmployee CRUD operations, listing, and email validation."
+		},
+		{
+			"name": "4. User Management",
+			"item": [
+				{
+					"name": "Get User Profile - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has user data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.user).to.exist;",
+									"    pm.expect(jsonData.data.user.uuid).to.exist;",
+									"    pm.expect(jsonData.data.user.role).to.exist;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/user/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "user", "profile"]
+						},
+						"description": "**Success Case: Get User Profile**\n\n**Prerequisites:**\n- Valid access token\n\n**Test Coverage:**\n- Fetches authenticated user's profile\n- Returns user + employee data\n- Uses token context"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Profile - Error (Unauthorized)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/user/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "user", "profile"]
+						},
+						"description": "**Error Case: No Authentication**\n\n**Test Coverage:**\n- Missing JWT token\n- Returns 401 Unauthorized"
+					},
+					"response": []
+				}
+			],
+			"description": "## User Management Module\n\nUser profile and account management."
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "employee_uuid",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

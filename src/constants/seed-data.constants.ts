@@ -12,7 +12,7 @@
  * This employee record is created during system initialization.
  */
 export const DEFAULT_SUPER_USER_EMPLOYEE = {
-  uuid: '5bebf1b8-f149-62js-87h3-52540245096b',
+  uuid: '5bebf1b8-f149-62ee-87a3-52540245096b',
   name: 'Rushikesh Palande',
   gender: 'Male' as const,
   dateOfBirth: '1990-01-01',
@@ -61,8 +61,8 @@ export const DEFAULT_SUPER_USER_EMPLOYEE = {
  * IMPORTANT: Change this password immediately after first login in production!
  */
 export const DEFAULT_SUPER_USER = {
-  uuid: 'xxebebb8-f749-11ed-97a3-52540145056b',
-  employeeId: '5bebf1b8-f149-62js-87h3-52540245096b',
+  uuid: 'a1ebebb8-f749-11ed-97a3-52540145056b',
+  employeeId: '5bebf1b8-f149-62ee-87a3-52540245096b',
   role: 'super_user' as const,
   plainPassword: 'Embed@123', // This will be hashed in the helper
   status: 'ACTIVE' as const,

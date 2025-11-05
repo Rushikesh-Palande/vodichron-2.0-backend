@@ -109,6 +109,14 @@ export const config: AppConfig = {
     version: getEnvVariable('API_VERSION', false, 'v1'),     // API version
   },
 
+  // JWT Configuration
+  // -----------------
+  // JSON Web Token settings for authentication
+  jwt: {
+    accessTokenExpiresIn: getEnvVariable('JWT_ACCESS_TOKEN_EXPIRES_IN', false, '30m'),        // Access token expiry (e.g., '30m', '1h')
+    refreshTokenMaxAgeMs: getEnvNumber('JWT_REFRESH_TOKEN_MAX_AGE_MS', 7 * 24 * 60 * 60 * 1000, 60000, 30 * 24 * 60 * 60 * 1000),  // Refresh token max age in milliseconds (default: 7 days)
+  },
+
   // Database Configuration
   // ---------------------
   // MySQL database connection settings with connection pooling
@@ -127,6 +135,36 @@ export const config: AppConfig = {
       acquire: getEnvNumber('DB_POOL_ACQUIRE', 30000, 1000, 60000),         // Max time (ms) to get connection
       idle: getEnvNumber('DB_POOL_IDLE', 10000, 1000, 60000),               // Max idle time (ms) before release
     },
+  },
+
+  // Email Configuration
+  // ------------------
+  // SMTP email service settings for sending notifications
+  email: {
+    host: getEnvVariable('EMAIL_HOST', false, 'smtp.gmail.com'),                          // SMTP host (default: Gmail)
+    port: getEnvNumber('EMAIL_PORT', 587, 1, 65535),                                      // SMTP port (default: 587 for TLS)
+    secure: getEnvBoolean('EMAIL_SECURE', false),                                         // Use SSL/TLS (false = use STARTTLS)
+    auth: {
+      user: getEnvVariable('EMAIL_USER', false, ''),                                      // SMTP username/email
+      pass: getEnvVariable('EMAIL_PASSWORD', false, ''),                                  // SMTP password/app password
+    },
+    from: {
+      name: getEnvVariable('EMAIL_FROM_NAME', false, 'Vodichron HRMS'),                  // Sender name
+      address: getEnvVariable('EMAIL_FROM_ADDRESS', false, 'noreply@vodichron.com'),     // Sender email address
+    },
+  },
+
+  // Frontend URL
+  // ------------
+  // Frontend application URL (for password reset emails, etc.)
+  frontendUrl: getEnvVariable('FRONTEND_URL', false, 'http://localhost:3000'),           // Frontend URL (default: localhost:3000)
+
+  // Asset/File Upload Configuration
+  // -------------------------------
+  // Settings for file uploads (documents, photos)
+  asset: {
+    path: getEnvVariable('ASSET_PATH', false, './assets'),                              // Path for storing uploaded assets
+    allowUpload: getEnvBoolean('ASSET_ALLOW_UPLOAD', true),                            // Allow/block uploads
   },
 };
 

@@ -1,0 +1,485 @@
+import { Router } from 'express';
+import { logger } from '../../../utils/logger';
+import { authenticateJWT } from '../../../middleware/auth.middleware';
+import { getEmployeeByIdExpressController } from '../controllers/crud/get-by-id.controller';
+import { getEmployeesListExpressController } from '../controllers/crud/list.controller';
+import { createEmployeeExpressController } from '../controllers/crud/create.controller';
+import { checkEmployeeExistExpressController } from '../controllers/crud/check-employee-exist.controller';
+import { updateEmployeeExpressController } from '../controllers/crud/update.controller';
+import { deleteEmployeeExpressController } from '../controllers/crud/delete.controller';
+import { searchManagerAssignmentExpressController } from '../controllers/search/search-manager-assignment.controller';
+import { searchAllEmployeesExpressController } from '../controllers/search/search-all-employees.controller';
+import { searchRoleAssignmentExpressController } from '../controllers/search/search-role-assignment.controller';
+import { searchLeaveApproverExpressController } from '../controllers/search/search-leave-approver.controller';
+import { uploadDocumentExpressController } from '../controllers/documents/upload-document.controller';
+import { getSelfDocumentsExpressController } from '../controllers/documents/get-self-documents.controller';
+import { deleteEmployeeDocumentExpressController } from '../controllers/documents/delete-employee-document.controller';
+import { downloadEmployeeDocumentExpressController } from '../controllers/documents/download-employee-document.controller';
+import { getReporteeDocumentsExpressController } from '../controllers/documents/get-reportee-documents.controller';
+import { updateDocumentStatusExpressController } from '../controllers/documents/update-document-status.controller';
+import { uploadPhotoExpressController } from '../controllers/photos/upload-photo.controller';
+import { getImageExpressController } from '../controllers/photos/get-image.controller';
+import { deleteImageExpressController } from '../controllers/photos/delete-image.controller';
+import { unifiedRegisterExpressController } from '../controllers/unified/unified-register.controller';
+import { upload } from '../../../middleware/upload.middleware';
+
+/**
+ * Employee Routes for Vodichron HRMS
+ * ==================================
+ * RESTful API routes for employee management operations.
+ * 
+ * Note: This is for Express REST API routes.
+ * tRPC routes are defined separately in trpc/routers/
+ * 
+ * Based on old vodichron employeeRoutes.ts
+ */
+const router = Router();
+
+// Log route registration start
+logger.info('👥 Initializing employee routes...');
+
+/**
+ * GET /status
+ * -----------
+ * Returns employee system status and enabled features
+ * IMPORTANT: This route must be defined BEFORE /:id to avoid conflicts
+ */
+router.get('/status', (_req, res) => {
+  logger.info('👥 Employee system status requested');
+  res.status(200).json({
+    success: true,
+    message: 'Employee system status retrieved',
+    data: {
+      status: 'active',
+      endpoints: {
+        getById: '/api/employees/:id',
+        list: '/api/employees/list',
+        create: '/api/employees/register',
+        exists: '/api/employees/exists',
+        update: '/api/employees/update',
+        searchManagerAssignment: '/api/employees/search/manager-assignment/:keyword',
+        searchLeaveApprover: '/api/employees/search/leave-approver/:keyword',
+        delete: '/api/employees/:id',
+        search: '/api/employees/search/:keyword',
+        status: '/api/employees/status',
+      },
+      features: {
+        profileManagement: true,
+        emailValidation: true,
+        managerSearch: true, // ✅ Implemented
+        documentUpload: false, // TODO: Implement
+        photoUpload: false, // TODO: Implement
+        searchFunctionality: false, // TODO: Implement (general search)
+        roleBasedAccess: true,
+      },
+      implemented: {
+        getById: true, // Available via both REST and tRPC
+        list: true, // Available via both REST and tRPC
+        create: true, // Available via both REST and tRPC
+        checkExists: true, // Available via both REST and tRPC
+        update: true, // Available via both REST and tRPC
+        searchManagerAssignment: true, // ✅ Available via both REST and tRPC
+        searchLeaveApprover: true, // ✅ Available via both REST and tRPC
+        delete: true, // ✅ Available via both REST and tRPC
+        searchAll: true, // ✅ General search (available via both REST and tRPC)
+      },
+      timestamp: new Date().toISOString(),
+    },
+  });
+});
+logger.info('✅ Employee status route registered: GET /employees/status');
+
+/**
+ * GET /:id
+ * --------
+ * Fetches employee profile by UUID with authorization checks
+ * 
+ * Authorization:
+ * - ALL_USERS (with role-based filtering in controller)
+ * 
+ * Old route: GET /employee/:id
+ */
+router.get('/:id', authenticateJWT, getEmployeeByIdExpressController);
+logger.info('✅ Employee route registered: GET /employees/:id');
+
+/**
+ * POST /list
+ * ----------
+ * Get paginated list of employees
+ * 
+ * Authorization:
+ * - ADMIN_USERS, directors, managers
+ * 
+ * Old route: POST /employee/list
+ */
+router.post('/list', authenticateJWT, getEmployeesListExpressController);
+logger.info('✅ Employee route registered: POST /employees/list');
+
+/**
+ * POST /register
+ * --------------
+ * Create new employee profile
+ * 
+ * Authorization:
+ * - ADMIN_USERS only (super_user, admin, hr)
+ * 
+ * Old route: POST /employee/register
+ */
+router.post('/register', authenticateJWT, createEmployeeExpressController);
+logger.info('✅ Employee route registered: POST /employees/register');
+
+/**
+ * POST /unified-register
+ * ----------------------
+ * Unified employee + user registration (atomic operation)
+ * Creates both employee record AND user account in one transaction
+ * 
+ * This is for the frontend unified registration page that collects:
+ * - Employee data (Tabs 1-5)
+ * - User registration data (Tab 6 - Grant Access)
+ * 
+ * Note: File uploads (photo, documents) happen AFTER via separate endpoints
+ * 
+ * Authorization:
+ * - ADMIN_USERS only (super_user, hr)
+ * - Only SuperUsers can create other SuperUsers
+ * 
+ * Returns: { employeeUuid, userUuid }
+ */
+router.post('/unified-register', authenticateJWT, unifiedRegisterExpressController);
+logger.info('✅ Employee route registered: POST /employees/unified-register');
+
+/**
+ * POST /exists
+ * ------------
+ * Check if employee email already exists
+ * 
+ * Authorization:
+ * - ALL_USERS (public endpoint for form validation)
+ * 
+ * Old route: POST /employee/exists
+ */
+router.post('/exists', checkEmployeeExistExpressController);
+logger.info('✅ Employee route registered: POST /employees/exists');
+
+/**
+ * PATCH /update
+ * -------------
+ * Update employee profile
+ * 
+ * Authorization:
+ * - ORG_USERS (self + admins/HR)
+ * - HR/Super users can update any employee and all fields
+ * - Regular employees can only update their own profile (restricted fields)
+ * 
+ * Old route: PATCH /employee/update
+ */
+router.patch('/update', authenticateJWT, updateEmployeeExpressController);
+logger.info('✅ Employee route registered: PATCH /employees/update');
+
+/**
+ * GET /search/manager-assignment/:keyword
+ * ---------------------------------------
+ * Search employees for manager/director assignment
+ * Used in employee registration/update forms for selecting reporting manager/director
+ * 
+ * Authorization:
+ * - ADMIN_USERS (super_user, admin, hr)
+ * 
+ * Query Parameters:
+ * - exclude: Comma-separated list of user UUIDs to exclude (optional)
+ * 
+ * Old route: GET /employee/search/manager-assignment/list/:keyword
+ */
+router.get(
+  '/search/manager-assignment/:keyword',
+  authenticateJWT,
+  searchManagerAssignmentExpressController
+);
+logger.info('✅ Employee route registered: GET /employees/search/manager-assignment/:keyword');
+
+/**
+ * DELETE /:id
+ * -----------
+ * Delete employee profile
+ * 
+ * Authorization:
+ * - ADMIN_USERS only (HR, SuperUser)
+ * 
+ * Old route: DELETE /employee/:id
+ */
+router.delete('/:id', authenticateJWT, deleteEmployeeExpressController);
+logger.info('✅ Employee route registered: DELETE /employees/:id');
+
+/**
+ * GET /search/:keyword
+ * -------------------
+ * Search employees by keyword (general search)
+ * 
+ * Authorization:
+ * - ALL_USERS (any authenticated user can search)
+ * 
+ * Query Parameters:
+ * - exclude: Comma-separated list of user UUIDs to exclude (optional)
+ * 
+ * Old route: GET /employee/search/list/:keyword
+ */
+router.get('/search/:keyword', authenticateJWT, searchAllEmployeesExpressController);
+logger.info('✅ Employee route registered: GET /employees/search/:keyword');
+
+/**
+ * GET /search/role-assignment/:keyword
+ * ------------------------------------
+ * Search employees for role assignment (employees WITHOUT application roles)
+ * Used when creating new application users - shows only employees without roles
+ * 
+ * Authorization:
+ * - ALL_USERS (any authenticated user can search)
+ * 
+ * Query Parameters:
+ * - exclude: Comma-separated list of user UUIDs to exclude (optional)
+ * 
+ * Old route: GET /employee/search/role-assignment/list/:keyword
+ */
+router.get('/search/role-assignment/:keyword', authenticateJWT, searchRoleAssignmentExpressController);
+logger.info('✅ Employee route registered: GET /employees/search/role-assignment/:keyword');
+
+/**
+ * GET /search/leave-approver/:keyword
+ * -----------------------------------
+ * Search employees for leave approver assignment (Directors only)
+ * Used when assigning leave approvers - shows only Directors
+ * 
+ * Authorization:
+ * - ALL_USERS (any authenticated user can search)
+ * 
+ * Query Parameters:
+ * - exclude: Comma-separated list of user UUIDs to exclude (optional)
+ * 
+ * Note: Auto-excludes logged-in user from results
+ * 
+ * Old route: GET /employee/search/leave-approver/list/:keyword
+ */
+router.get('/search/leave-approver/:keyword', authenticateJWT, searchLeaveApproverExpressController);
+logger.info('✅ Employee route registered: GET /employees/search/leave-approver/:keyword');
+
+/**
+ * POST /document/upload
+ * --------------------
+ * Upload employee documents (PAN, Aadhaar, etc.)
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can only upload their own documents)
+ * - Service layer enforces userId === logged-in user
+ * 
+ * Request:
+ * - Content-Type: multipart/form-data
+ * - Fields: userId (UUID), documentType (string), fileupload (file)
+ * 
+ * File Upload:
+ * - Handled by multer middleware (upload.single('fileupload'))
+ * - Max file size: 10MB
+ * - Stored in: {assetPath}/employee_documents/
+ * 
+ * Old route: POST /employee/document/upload
+ */
+router.post(
+  '/document/upload',
+  authenticateJWT,
+  upload.single('fileupload'),
+  uploadDocumentExpressController
+);
+logger.info('✅ Employee route registered: POST /employees/document/upload');
+
+/**
+ * GET /documents/:id
+ * -----------------
+ * Get employee's own documents with HR approval details
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can only view their own documents)
+ * - Service layer enforces params.id === logged-in user
+ * 
+ * Response:
+ * - Array of documents with:
+ *   - Document type, filename
+ *   - HR approval status, comments
+ *   - HR approver details (if reviewed)
+ * 
+ * Old route: GET /employee/documents/:id
+ */
+router.get('/documents/:id', authenticateJWT, getSelfDocumentsExpressController);
+logger.info('✅ Employee route registered: GET /employees/documents/:id');
+
+/**
+ * DELETE /document/:empid/:docid
+ * ------------------------------
+ * Delete employee document
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can delete their own documents)
+ * - HR/SuperUser can delete any employee's documents
+ * - Service layer enforces: empid === logged-in user OR user is HR/SuperUser
+ * 
+ * URL Parameters:
+ * - empid: Employee UUID who owns the document
+ * - docid: Document UUID to delete
+ * 
+ * Response:
+ * - success: boolean
+ * - message: string
+ * - data: deletion result
+ * 
+ * Old route: DELETE /employee/document/:empid/:docid
+ */
+router.delete('/document/:empid/:docid', authenticateJWT, deleteEmployeeDocumentExpressController);
+logger.info('✅ Employee route registered: DELETE /employees/document/:empid/:docid');
+
+/**
+ * GET /document/download/:empid/:docid
+ * ------------------------------------
+ * Download employee document as file attachment
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can download their own documents)
+ * - HR/SuperUser can download any employee's documents
+ * - Service layer enforces: empid === logged-in user OR user is HR/SuperUser
+ * 
+ * URL Parameters:
+ * - empid: Employee UUID who owns the document
+ * - docid: Document UUID to download
+ * 
+ * Response:
+ * - Binary file download (with appropriate Content-Type)
+ * - Uses res.sendFile() to stream file
+ * 
+ * Old route: GET /employee/document/download/:empid/:docid
+ */
+router.get('/document/download/:empid/:docid', authenticateJWT, downloadEmployeeDocumentExpressController);
+logger.info('✅ Employee route registered: GET /employees/document/download/:empid/:docid');
+
+/**
+ * POST /all/documents
+ * ------------------
+ * Get employee documents for HR approval (paginated)
+ * 
+ * Authorization:
+ * - Intended for HR/SuperUser roles
+ * - No explicit auth check in service (middleware handles it)
+ * 
+ * Request Body:
+ * - pagination: { page?: number, pageLimit?: number }
+ * - filters?: { hrApprovalStatus?: 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'PENDING' }
+ * 
+ * Response:
+ * - Array of documents with employee name and HR approval details
+ * - Excludes logged-in user's own documents
+ * 
+ * Old route: POST /employee/all/documents
+ */
+router.post('/all/documents', authenticateJWT, getReporteeDocumentsExpressController);
+logger.info('✅ Employee route registered: POST /employees/all/documents');
+
+/**
+ * PATCH /document/approve/:docid
+ * ------------------------------
+ * Update HR approval status for employee document
+ * 
+ * Authorization:
+ * - ONLY HR/SuperUser roles
+ * - Service layer enforces authorization
+ * 
+ * URL Parameter:
+ * - docid: Document UUID
+ * 
+ * Request Body:
+ * - approvalStatus: 'APPROVED' | 'REJECTED'
+ * - comment: string (HR comments)
+ * 
+ * Response:
+ * - success: boolean
+ * - message: string
+ * 
+ * Old route: PATCH /employee/document/approve/:docid
+ */
+router.patch('/document/approve/:docid', authenticateJWT, updateDocumentStatusExpressController);
+logger.info('✅ Employee route registered: PATCH /employees/document/approve/:docid');
+
+/**
+ * POST /photo/upload
+ * ------------------
+ * Upload employee photo
+ * 
+ * Authorization:
+ * - ORG_USERS (employees can only upload their own photo)
+ * - Service layer enforces userId === logged-in user
+ * 
+ * Request:
+ * - Content-Type: multipart/form-data
+ * - Fields: userId (UUID), fileupload (image file)
+ * 
+ * File Upload:
+ * - Handled by multer middleware (upload.single('fileupload'))
+ * - Max file size: 10MB
+ * - Stored in: {assetPath}/employee_documents/
+ * 
+ * Old route: POST /employee/photo/upload
+ */
+router.post(
+  '/photo/upload',
+  authenticateJWT,
+  upload.single('fileupload'),
+  uploadPhotoExpressController
+);
+logger.info('✅ Employee route registered: POST /employees/photo/upload');
+
+/**
+ * GET /image/:id
+ * -------------
+ * Get employee photo as image file
+ * 
+ * Authorization:
+ * - Any authenticated user can view any employee's photo
+ * - No explicit authorization (public within organization)
+ * 
+ * URL Parameter:
+ * - id: Employee UUID
+ * 
+ * Response:
+ * - Binary image file (JPEG, PNG, etc.)
+ * - Or default nouser.png if no photo uploaded
+ * - Content-Type set automatically based on file type
+ * 
+ * Old route: GET /employee/image/:id
+ */
+router.get('/image/:id', authenticateJWT, getImageExpressController);
+logger.info('✅ Employee route registered: GET /employees/image/:id');
+
+/**
+ * DELETE /image/:id
+ * ----------------
+ * Delete employee photo
+ * 
+ * Authorization:
+ * - Should be restricted to self or HR/Admin
+ * - No explicit authorization in old code (to be improved)
+ * 
+ * URL Parameter:
+ * - id: Employee UUID
+ * 
+ * Response:
+ * - success: boolean
+ * - message: string
+ * 
+ * Actions:
+ * 1. Updates database (sets recentPhotograph to empty string)
+ * 2. Deletes physical file from filesystem
+ * 
+ * Old route: DELETE /employee/image/:id
+ */
+router.delete('/image/:id', authenticateJWT, deleteImageExpressController);
+logger.info('✅ Employee route registered: DELETE /employees/image/:id');
+
+// All photo management routes implemented ✅
+
+export default router;

@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  # ============================================================
+  # MySQL Database
+  # ============================================================
+  mysql:
+    image: mysql:8.0
+    container_name: vodichron-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-vodichron}
+      MYSQL_USER: ${DB_USER:-vodichron}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-vodichron123}
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+      TZ: 'Asia/Kolkata'
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - vodichron_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER:-vodichron}", "-p${DB_PASSWORD:-vodichron123}"]
+      timeout: 20s
+      retries: 10
+
+  # ============================================================
+  # Vodichron Backend Application
+  # ============================================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vodichron-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${PORT:-5000}
+      HOST: 0.0.0.0
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-vodichron}
+      DB_USER: ${DB_USER:-vodichron}
+      DB_PASSWORD: ${DB_PASSWORD:-vodichron123}
+      DB_TIMEZONE: ${DB_TIMEZONE:-+05:30}
+      DB_POOL_MAX: 10
+      DB_POOL_MIN: 2
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:5173}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-in-production}
+      JWT_ACCESS_TOKEN_EXPIRES_IN: ${JWT_ACCESS_TOKEN_EXPIRES_IN:-1h}
+      JWT_REFRESH_TOKEN_MAX_AGE_MS: ${JWT_REFRESH_TOKEN_MAX_AGE_MS:-604800000}
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_SECURE: ${EMAIL_SECURE:-false}
+      EMAIL_USER: ${EMAIL_USER:-your-email@gmail.com}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-your-password}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Vodichron HRMS}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-noreply@vodichron.com}
+    ports:
+      - "${PORT:-5000}:5000"
+    volumes:
+      - ./logs:/app/logs
+      - ./assets:/app/assets
+    networks:
+      - vodichron_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================================
+  # Nginx Reverse Proxy (Optional - for production)
+  # ============================================================
+  nginx:
+    image: nginx:alpine
+    container_name: vodichron-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf.template:/etc/nginx/nginx.conf.template
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/nginx/ssl  # Mount SSL certificates here
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - vodichron_network
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================
+  # Redis Cache (Optional - for session store and caching)
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: vodichron-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - vodichron_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    command: redis-server --appendonly yes
+
+# ============================================================
+# Networks
+# ============================================================
+networks:
+  vodichron_network:
+    driver: bridge
+
+# ============================================================
+# Volumes
+# ============================================================
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local

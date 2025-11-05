@@ -22,8 +22,8 @@
 
 import { TRPCError } from '@trpc/server';
 import { logger, logSecurity, PerformanceTimer } from '../../../utils/logger';
-import { getEmployeeByUuidWithManagerDetail, checkIfEmployeeMappedToCustomer } from '../stores/employee.store';
-import { decryptEmployeeSensitiveFields } from '../helpers/security.helper';
+import { getEmployeeByUuidWithManagerDetail, checkIfEmployeeMappedToCustomer, getPaginatedEmployees } from '../stores/crud/employee.store';
+import { decryptEmployeeSensitiveFields } from '../helpers/decrypt-employee-sensitive-fields.helper';
 import { EmployeeWithManagerDetail, ApplicationUserRole } from '../types/employee.types';
 
 /**
@@ -305,4 +305,130 @@ async function checkAuthorization(
   });
 
   return false;
+}
+
+/**
+ * Get Employees List Service (for tRPC)
+ * ====================================
+ * 
+ * Fetches paginated list of employees with filters.
+ * Returns data and throws TRPCError (for tRPC use).
+ * 
+ * Authorization: Admin, HR, Directors, Managers only
+ * 
+ * @param pagination - Page and limit
+ * @param filters - Optional filters (designation, department, manager)
+ * @param user - Authenticated user context
+ * @returns Array of employees with decrypted sensitive data
+ */
+export async function getEmployeesList(
+  pagination: { page?: number; pageLimit?: number },
+  filters: {
+    designation?: string;
+    department?: string;
+    reportingManagerId?: string;
+    reportingManagerRole?: string;
+  } | undefined,
+  user: UserContext
+): Promise<any[]> {
+  const timer = new PerformanceTimer('getEmployeesList_service_trpc');
+  
+  try {
+    logger.info('📊 Fetching employees list (tRPC)', {
+      requestedBy: user.uuid,
+      requestedByRole: user.role,
+      pagination,
+      filters,
+      operation: 'getEmployeesList'
+    });
+
+    // Step 1: Authorization Check
+    const allowedRoles = [
+      ApplicationUserRole.superUser,
+      ApplicationUserRole.admin,
+      ApplicationUserRole.hr,
+      ApplicationUserRole.director,
+      ApplicationUserRole.manager
+    ];
+
+    if (!allowedRoles.includes(user.role)) {
+      logger.warn('🚫 Access denied - User not authorized to view employees list', {
+        requestedBy: user.uuid,
+        requestedByRole: user.role
+      });
+
+      logSecurity('GET_EMPLOYEES_LIST_ACCESS_DENIED', 'high', {
+        userRole: user.role,
+        reason: 'Insufficient permissions'
+      }, undefined, user.uuid);
+
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to view employees list'
+      });
+    }
+
+    // Step 2: Extract pagination
+    let page = pagination?.page || 1;
+    const pageLimit = pagination?.pageLimit || 20;
+
+    if (!page || page < 1) {
+      page = 1;
+    }
+
+    // Step 3: Fetch employees from database
+    const employees = await getPaginatedEmployees(user.uuid, filters, page, pageLimit);
+
+    // Step 4: Decrypt sensitive fields
+    logger.debug('🔓 Decrypting sensitive fields for employees', {
+      count: employees.length
+    });
+
+    const employeesWithDecryptedData = await Promise.all(
+      employees.map(async (employee) => await decryptEmployeeSensitiveFields(employee))
+    );
+
+    // Step 5: Log success and return
+    const duration = timer.end();
+
+    logger.info('✅ Employees list fetched successfully (tRPC)', {
+      count: employeesWithDecryptedData.length,
+      page,
+      pageLimit,
+      requestedBy: user.uuid,
+      duration: `${duration}ms`
+    });
+
+    logSecurity('GET_EMPLOYEES_LIST_SUCCESS', 'low', {
+      count: employeesWithDecryptedData.length,
+      userRole: user.role,
+      duration
+    }, undefined, user.uuid);
+
+    return employeesWithDecryptedData;
+
+  } catch (error: any) {
+    const duration = timer.end();
+
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+
+    logger.error('❌ Failed to fetch employees list (tRPC)', {
+      requestedBy: user.uuid,
+      error: error.message,
+      stack: error.stack,
+      duration: `${duration}ms`
+    });
+
+    logSecurity('GET_EMPLOYEES_LIST_ERROR', 'critical', {
+      error: error.message,
+      duration
+    }, undefined, user.uuid);
+
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to fetch employees list. Please try again later.'
+    });
+  }
 }

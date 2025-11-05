@@ -432,7 +432,7 @@ export async function upsertEmployeeOnlineStatus(
     // Step 3: Upsert operation
     const result = await OnlineStatus.upsert({
       employeeId: employeeUuid,
-      status,
+      onlineStatus: status,
       updatedAt: new Date()
     } as any);
     

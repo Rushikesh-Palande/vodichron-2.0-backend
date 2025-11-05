@@ -1,0 +1,62 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+dist
+build
+*.tsbuildinfo
+
+# IDE & Editor
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+.env.local
+.env.*.local
+
+# Testing
+coverage
+.nyc_output
+jest.config.js
+
+# Documentation
+*.md
+README.md
+CHANGELOG.md
+PRODUCTION_DEPLOYMENT.md
+WEBSOCKET_USAGE.md
+
+# Development
+.env
+.env.example
+scripts/
+.github/
+
+# Logs
+logs
+*.log
+
+# Other
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile
+.dockerignore
+.editorconfig
+.eslintignore
+.prettierignore
+
+# OS
+Thumbs.db
+*.pem
+
+# Nginx
+nginx.conf.template
+ssl/

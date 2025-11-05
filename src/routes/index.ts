@@ -27,8 +27,22 @@ import authRoutes from '../modules/auth/routes/auth.routes';
 router.use('/api/auth', authRoutes);
 logger.debug('  📍 Mounted: /api/auth → authRoutes');
 
+// Employee routes
+import employeeRoutes from '../modules/employee/routes/employee.routes';
+router.use('/api/employees', employeeRoutes);
+logger.debug('  📍 Mounted: /api/employees → employeeRoutes');
+
+// User routes
+import userRoutes from '../modules/users/routes/user.routes';
+router.use('/api/user', userRoutes);
+logger.debug('  📍 Mounted: /api/user → userRoutes');
+
+// Master Data routes
+import masterDataRoutes from '../modules/master-data/routes/master-data.routes';
+router.use('/api/master-data', masterDataRoutes);
+logger.debug('  📍 Mounted: /api/master-data → masterDataRoutes');
+
 // TODO: Add more routes here as they are implemented
-// router.use('/api/employees', employeeRoutes);
 // router.use('/api/leaves', leaveRoutes);
 // router.use('/api/timesheets', timesheetRoutes);
 // etc.

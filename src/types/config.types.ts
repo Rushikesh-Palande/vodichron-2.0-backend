@@ -56,6 +56,11 @@ export interface ApiConfig {
   version: string;
 }
 
+export interface JwtConfig {
+  accessTokenExpiresIn: string;      // e.g., '30m', '1h', '2h'
+  refreshTokenMaxAgeMs: number;      // in milliseconds (e.g., 7 days)
+}
+
 export interface DatabaseConfig {
   host: string;
   port: number;
@@ -72,6 +77,25 @@ export interface DatabaseConfig {
   };
 }
 
+export interface EmailConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth: {
+    user: string;
+    pass: string;
+  };
+  from: {
+    name: string;
+    address: string;
+  };
+}
+
+export interface AssetConfig {
+  path: string;          // Path for storing uploaded assets (e.g., './assets')
+  allowUpload: boolean;  // Allow/block uploads for the environment
+}
+
 export interface AppConfig {
   server: ServerConfig;
   isDevelopment: boolean;
@@ -80,5 +104,9 @@ export interface AppConfig {
   cors: CorsConfig;
   logging: LoggingConfig;
   api: ApiConfig;
+  jwt: JwtConfig;
   db: DatabaseConfig;
+  email: EmailConfig;
+  frontendUrl: string;
+  asset: AssetConfig;
 }
