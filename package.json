@@ -14,6 +14,7 @@
     "check:seed": "node dist/scripts/check-seed.js",
     "lint": "eslint src --ext .ts --fix",
     "typecheck": "tsc --noEmit",
+    "test": "echo 'No tests configured yet'",
     "deploy": "sh scripts/deploy.sh",
     "deploy:prod": "sh scripts/deployProd.sh"
   },
@@ -46,7 +47,6 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "mysql2": "^3.15.3",
-    "mysqldump": "^3.2.0",
     "nodemailer": "^7.0.10",
     "sequelize": "^6.37.7",
     "superjson": "^2.2.3",
@@ -69,6 +69,7 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^9.0.0",
+    "mysqldump": "^3.2.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
