@@ -160,7 +160,6 @@ export async function deleteEmployeeDocument(
     // ==========================================================================
     // STEP 6: Delete Physical File from Filesystem
     // ==========================================================================
-    // Implements old code TODO (line 367): "Delete document from the folder"
     const assetPath = config.asset.path;
     const filePath = path.join(assetPath, 'employee_documents', documentInfo.fileName);
 

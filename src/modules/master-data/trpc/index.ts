@@ -14,10 +14,6 @@ import { getMasterDataProcedure } from './routers/get-master-data.router';
  * 
  * Procedures:
  * - get: Fetch all master data configuration (designation, department, etc.)
- * 
- * Future Procedures (TODO):
- * - update: Update master data values (admin only)
- * - create: Create new master data fields (admin only)
  */
 export const masterDataRouter = router({
   get: getMasterDataProcedure,

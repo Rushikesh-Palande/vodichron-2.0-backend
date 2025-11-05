@@ -42,11 +42,6 @@ import masterDataRoutes from '../modules/master-data/routes/master-data.routes';
 router.use('/api/master-data', masterDataRoutes);
 logger.debug('  📍 Mounted: /api/master-data → masterDataRoutes');
 
-// TODO: Add more routes here as they are implemented
-// router.use('/api/leaves', leaveRoutes);
-// router.use('/api/timesheets', timesheetRoutes);
-// etc.
-
 const duration = routeTimer.end();
 const mountedRoutes = [
   { path: '/', handler: 'healthRoutes', methods: ['GET'] }

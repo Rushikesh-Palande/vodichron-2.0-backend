@@ -58,15 +58,12 @@ function sanitizeKeyword(keyword: string): string {
  * Main service function for role assignment search.
  * No special authorization required - all authenticated users can search.
  * 
- * Features:
- * - Keyword sanitization
- * - Does NOT auto-exclude logged-in user (matching old controller lines 191-194)
- * - Supports manual exclusion list
- * - Returns only employees WITHOUT roles (NOT EXISTS in store layer)
- * - Returns max 10 results
- * 
- * Note: Old code has TODO (line 196) to use searchAllEmployeesByKeyword instead,
- * but we keep current implementation to match exactly.
+    // Features:
+    // - Keyword sanitization
+    // - Does NOT auto-exclude logged-in user
+    // - Supports manual exclusion list
+    // - Returns only employees WITHOUT roles (NOT EXISTS in store layer)
+    // - Returns max 10 results
  * 
  * @param input - Search parameters (keyword, excludedUsers)
  * @param user - Authenticated user context

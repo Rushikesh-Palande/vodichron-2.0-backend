@@ -172,10 +172,7 @@ export async function unifiedRegisterEmployeeAndUser(
 
       const dateOfJoining = moment(input.dateOfJoining).format('YYYY-MM-DD');
       const currentYear = new Date().getFullYear().toString();
-
-      // TODO: Uncomment when leave allocation service is implemented
-      // Import: import { allocateEmployeeLeaves } from '../../../leave/services/allocate-leaves.service';
-      // await allocateEmployeeLeaves(employeeUuid, dateOfJoining, currentYear);
+      // Leave allocation to be implemented
       
       logger.info('✅ Step 4 complete: Employee leaves allocated', {
         employeeUuid,

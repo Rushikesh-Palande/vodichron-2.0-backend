@@ -108,11 +108,7 @@ export async function deleteAppUserData(employeeId: string): Promise<void> {
  * - DELETE FROM application_users (via deleteAppUserData)
  * - DELETE FROM employees
  * 
- * Note: This does NOT delete:
- * - Employee documents (files on disk)
- * - Employee document records (TODO in original code)
- * - Leave records
- * - Timesheet records
+  * Note: This does NOT delete related records or files (cascade depends on DB configuration)
  * 
  * @param employeeUuid - UUID of the employee to delete
  * @returns True if deletion successful

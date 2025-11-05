@@ -26,7 +26,6 @@ import { logger, logDatabase, PerformanceTimer } from '../../../../utils/logger'
  * ```
  * 
  * Note from old code (line 367):
- * - TODO: Delete document from the folder (not implemented yet)
  * - This only deletes the database record, not the physical file
  * 
  * @param documentId - Document UUID to delete
@@ -75,11 +74,6 @@ export async function deleteEmployeeDocumentById(documentId: string): Promise<vo
       duration: `${duration}ms`
     });
 
-    // Note: Old code has TODO to delete physical file from folder
-    // TODO: Implement file deletion from storage
-    // const assetPath = config.get('asset.path');
-    // const filePath = `${assetPath}/employee_documents/${fileName}`;
-    // fs.unlinkSync(filePath);
 
   } catch (error: any) {
     // ==========================================================================

@@ -67,9 +67,6 @@ router.get('/status', (_req, res) => {
         profileManagement: true,
         emailValidation: true,
         managerSearch: true, // ✅ Implemented
-        documentUpload: false, // TODO: Implement
-        photoUpload: false, // TODO: Implement
-        searchFunctionality: false, // TODO: Implement (general search)
         roleBasedAccess: true,
       },
       implemented: {

@@ -25,9 +25,6 @@
  * LIMIT 10
  * ```
  * 
- * TODO in old code (line 196):
- * "use function searchAllEmployeesByKeyword, by passing excluded ids"
- * We keep the current implementation to match exactly
  */
 
 import { QueryTypes } from 'sequelize';

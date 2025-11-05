@@ -32,8 +32,4 @@ logger.info('⚙️ Initializing master data routes...');
 router.get('/', authenticateJWT, getMasterDataExpressController);
 logger.info('✅ Master data route registered: GET /master-data');
 
-// TODO: Add more routes here as needed
-// Following the pattern from old vodichron:
-// - PATCH /save - Update master data values (admin only)
-
 export default router;
