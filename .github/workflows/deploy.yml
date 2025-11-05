@@ -154,7 +154,7 @@ jobs:
             npm ci --production
             npm run build:clean
             npm run seed || true
-            pm2 restart vodichron-backend
+            pm2 restart vodichron-backend || pm2 start dist/server.js --name "vodichron-backend" --interpreter node -- --max-old-space-size=4096
             pm2 logs vodichron-backend --nostream | head -20
 
       - name: Verify deployment
@@ -207,7 +207,7 @@ jobs:
             npm ci --production
             npm run build:clean
             npm run seed || true
-            pm2 restart vodichron-backend-staging
+            pm2 restart vodichron-backend-staging || pm2 start dist/server.js --name "vodichron-backend-staging" --interpreter node -- --max-old-space-size=4096
             pm2 logs vodichron-backend-staging --nostream | head -20
 
       - name: Verify staging deployment
