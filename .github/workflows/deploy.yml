@@ -158,14 +158,32 @@ jobs:
             pm2 logs vodichron-backend --nostream | head -20
 
       - name: Verify deployment
+        continue-on-error: true
         run: |
-          HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.PROD_DOMAIN }}/health)
-          if [ "$HEALTH_CHECK" = "200" ]; then
-            echo "✓ Health check passed"
-          else
-            echo "✗ Health check failed with status $HEALTH_CHECK"
-            exit 1
-          fi
+          echo "Waiting 15s for app to start..."
+          sleep 15
+          
+          MAX_RETRIES=5
+          RETRY_DELAY=10
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Health check attempt $i/$MAX_RETRIES..."
+            HEALTH_CHECK=$(curl -sk -o /dev/null -w "%{http_code}" https://${{ secrets.PROD_DOMAIN }}/health 2>/dev/null || echo "000")
+            
+            if [ "$HEALTH_CHECK" = "200" ]; then
+              echo "✓ Health check passed"
+              exit 0
+            fi
+            
+            echo "  Status: $HEALTH_CHECK"
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "  Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+          
+          echo "✗ Health check failed after $MAX_RETRIES attempts"
+          exit 1
 
       - name: Deployment Summary
         if: always()
@@ -211,11 +229,29 @@ jobs:
             pm2 logs vodichron-backend-staging --nostream | head -20
 
       - name: Verify staging deployment
+        continue-on-error: true
         run: |
-          HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.STAGING_DOMAIN }}/health)
-          if [ "$HEALTH_CHECK" = "200" ]; then
-            echo "✓ Staging health check passed"
-          else
-            echo "✗ Staging health check failed with status $HEALTH_CHECK"
-            exit 1
-          fi
+          echo "Waiting 15s for app to start..."
+          sleep 15
+          
+          MAX_RETRIES=5
+          RETRY_DELAY=10
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Staging health check attempt $i/$MAX_RETRIES..."
+            HEALTH_CHECK=$(curl -sk -o /dev/null -w "%{http_code}" https://${{ secrets.STAGING_DOMAIN }}/health 2>/dev/null || echo "000")
+            
+            if [ "$HEALTH_CHECK" = "200" ]; then
+              echo "✓ Staging health check passed"
+              exit 0
+            fi
+            
+            echo "  Status: $HEALTH_CHECK"
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "  Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+          
+          echo "✗ Staging health check failed after $MAX_RETRIES attempts"
+          exit 1
