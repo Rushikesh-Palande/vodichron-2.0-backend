@@ -1,0 +1,118 @@
+name: Security Scanning
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  # ============================================================
+  # NPM Dependency Vulnerability Scan
+  # ============================================================
+  npm-audit:
+    runs-on: ubuntu-latest
+    name: NPM Audit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --production
+        continue-on-error: true
+
+      - name: Create security report
+        if: always()
+        run: npm audit --production --json > audit-report.json || true
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-audit-report
+          path: audit-report.json
+
+  # ============================================================
+  # Docker Image Vulnerability Scan (Build Check)
+  # ============================================================
+  docker-build:
+    runs-on: ubuntu-latest
+    name: Docker Build Verification
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================
+  # Code Quality Check
+  # ============================================================
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript strict mode check
+        run: npm run typecheck
+
+      - name: Lint code
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Check for console logs (anti-pattern)
+        run: |
+          if grep -r "console\." src --include="*.ts" | grep -v "console\.error\|console\.warn\|// console\."; then
+            echo "❌ Found console logs in source code"
+            exit 1
+          else
+            echo "✓ No console logs found"
+          fi
+
+      - name: Check for TODO comments
+        run: |
+          TODO_COUNT=$(grep -r "TODO\|FIXME" src --include="*.ts" | wc -l)
+          if [ $TODO_COUNT -gt 5 ]; then
+            echo "⚠️ Found $TODO_COUNT TODO/FIXME comments (limit: 5)"
+            exit 1
+          fi
+
+

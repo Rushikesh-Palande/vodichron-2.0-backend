@@ -1,0 +1,221 @@
+name: Build & Deploy
+
+# GitHub Secrets Required:
+# - PROD_SERVER_HOST: Production server IP/domain
+# - PROD_SERVER_USER: SSH user for production
+# - PROD_SERVER_SSH_KEY: SSH private key for production
+# - PROD_DOMAIN: Production domain name
+# - STAGING_SERVER_HOST: Staging server IP/domain
+# - STAGING_SERVER_USER: SSH user for staging
+# - STAGING_SERVER_SSH_KEY: SSH private key for staging
+# - STAGING_DOMAIN: Staging domain name
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================================
+  # Build & Test Job
+  # ============================================================
+  build-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: vodichron_test
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run typecheck
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Build application
+        run: npm run build:clean
+
+      - name: Run tests
+        run: npm run test
+        env:
+          DB_HOST: localhost
+          DB_USER: root
+          DB_PASSWORD: root
+          DB_NAME: vodichron_test
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: coverage/
+
+  # ============================================================
+  # Build Docker Image
+  # ============================================================
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: build-test
+    if: github.event_name == 'push'
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================================
+  # Deploy to Production
+  # ============================================================
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: build-docker
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_SERVER_HOST }}
+          username: ${{ secrets.PROD_SERVER_USER }}
+          key: ${{ secrets.PROD_SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/vodichron-backend
+            git pull origin main
+            npm ci --production
+            npm run build:clean
+            npm run seed || true
+            pm2 restart vodichron-backend
+            pm2 logs vodichron-backend --nostream | head -20
+
+      - name: Verify deployment
+        run: |
+          HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.PROD_DOMAIN }}/health)
+          if [ "$HEALTH_CHECK" = "200" ]; then
+            echo "✓ Health check passed"
+          else
+            echo "✗ Health check failed with status $HEALTH_CHECK"
+            exit 1
+          fi
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Production Deployment Successful"
+            echo "  Environment: Production"
+            echo "  Branch: main"
+            echo "  Domain: ${{ secrets.PROD_DOMAIN }}"
+            echo "  Commit: ${{ github.sha }}"
+            echo "  Author: ${{ github.actor }}"
+          else
+            echo "❌ Production Deployment Failed"
+            echo "  See GitHub Actions logs for details"
+            echo "  Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+
+  # ============================================================
+  # Deploy to Staging
+  # ============================================================
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build-docker
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to staging server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.STAGING_SERVER_HOST }}
+          username: ${{ secrets.STAGING_SERVER_USER }}
+          key: ${{ secrets.STAGING_SERVER_SSH_KEY }}
+          script: |
+            cd /var/www/vodichron-backend-staging
+            git pull origin develop
+            npm ci --production
+            npm run build:clean
+            npm run seed || true
+            pm2 restart vodichron-backend-staging
+            pm2 logs vodichron-backend-staging --nostream | head -20
+
+      - name: Verify staging deployment
+        run: |
+          HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.STAGING_DOMAIN }}/health)
+          if [ "$HEALTH_CHECK" = "200" ]; then
+            echo "✓ Staging health check passed"
+          else
+            echo "✗ Staging health check failed with status $HEALTH_CHECK"
+            exit 1
+          fi
