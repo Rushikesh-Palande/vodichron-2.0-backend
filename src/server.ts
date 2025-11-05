@@ -1,4 +1,5 @@
 import { createServer } from 'http';
+import { Server as SocketServer } from 'ws';
 import app from './app';
 import { config } from './config';
 import { logger, logSystem } from './utils/logger';
@@ -6,6 +7,7 @@ import { connectDatabase, syncDatabase, closeDatabase } from './database';
 import { performDatabaseHealthCheck } from './utils/db-health-check';
 import { runAllSeeds } from './seeds/master-seed-runner';
 import { startAllCronJobs, stopAllCronJobs } from './cron-jobs/master-cron-runner';
+import { initializeWebSocketServer, startHeartbeatMonitor, getConnectedClientsCount } from './websocket/connection.manager';
 
 /**
  * Vodichron HRMS Backend Server Entry Point
@@ -26,6 +28,8 @@ import { startAllCronJobs, stopAllCronJobs } from './cron-jobs/master-cron-runne
  * ---------------------------------
  */
 let httpServer: ReturnType<typeof createServer>;
+let wss: SocketServer;
+let heartbeatInterval: ReturnType<typeof setInterval>;
 let isShuttingDown = false;
 
 /**
@@ -58,6 +62,21 @@ const gracefulShutdown = async (signal: string, server: any) => {
     // Stop cron jobs first
     logger.info('⏰ Stopping cron jobs...');
     stopAllCronJobs();
+
+    // Stop WebSocket heartbeat monitor
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      logger.info('💓 WebSocket heartbeat monitor stopped');
+    }
+
+    // Close all WebSocket connections
+    if (wss) {
+      const connectedCount = getConnectedClientsCount();
+      logger.info(`🔌 Closing ${connectedCount} WebSocket client(s)...`);
+      wss.clients.forEach((client: any) => {
+        client.close(1000, 'Server shutting down');
+      });
+    }
     
     // Stop accepting new connections
     logger.info('🔒 Stopping server from accepting new connections...');
@@ -141,9 +160,24 @@ const startServer = async (): Promise<void> => {
     await startAllCronJobs();
     logger.info('✅ Cron jobs started successfully');
 
-    // Step 7: Create HTTP server
+    // Step 7: Create HTTP server and initialize WebSocket
     logger.info('🌐 Creating HTTP server...');
     httpServer = createServer(app);
+    
+    // Initialize WebSocket server
+    logger.info('🔌 Initializing WebSocket server...');
+    wss = initializeWebSocketServer(httpServer);
+    logger.info('✅ WebSocket server initialized on path /ws-con-ui-update');
+    
+    // Start heartbeat monitor
+    const heartbeatIntervalMs = 30000; // 30 seconds
+    heartbeatInterval = startHeartbeatMonitor(heartbeatIntervalMs) as any;
+    logger.info('💓 WebSocket heartbeat monitor started');
+    
+    // Set server timeouts
+    const timeoutMs = 60 * 1000; // 60 seconds
+    httpServer.setTimeout(timeoutMs);
+    httpServer.keepAliveTimeout = timeoutMs;
 
     // Step 7: Start listening for connections
     logger.info(`🚀 Starting server on ${config.server.host}:${config.server.port}...`);
@@ -174,6 +208,7 @@ const startServer = async (): Promise<void> => {
       logger.info(`   - Health Check: http://${config.server.host}:${config.server.port}/health`);
       logger.info(`   - API Documentation: http://${config.server.host}:${config.server.port}/`);
       logger.info(`   - API Base: http://${config.server.host}:${config.server.port}${config.api.prefix}`);
+      logger.info(`   - WebSocket: ws://${config.server.host}:${config.server.port}/ws-con-ui-update?userId={userId}&userRole={userRole}`);
 
       // Development mode specific logs
       if (config.isDevelopment) {
