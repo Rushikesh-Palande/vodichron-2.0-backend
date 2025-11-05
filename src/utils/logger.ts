@@ -38,7 +38,6 @@ const createLogsDirectory = (): void => {
   // Create main logs directory only
   if (!fs.existsSync(logsDir)) {
     fs.mkdirSync(logsDir, { recursive: true });
-    console.log('📁 Logs directory created at:', logsDir);
   }
 };
 
