@@ -20,6 +20,7 @@ import { checkEmployeeEmailExists, insertEmployee, deleteEmployeeById } from '..
 import { CreateEmployeeInput } from '../../schemas/crud/create.schemas';
 import { ApplicationUserRole } from '../../types/employee.types';
 import { encryptEmployeeSensitiveFields } from '../../helpers/encrypt-employee-sensitive-fields.helper';
+import { allocateEmployeeLeaves } from '../../../employee-leaves/services/leave-calculation.service';
 
 /**
  * User Context Interface
@@ -189,11 +190,14 @@ export async function createEmployee(
       const dateOfJoining = moment(employeeData.dateOfJoining).format('YYYY-MM-DD');
       const currentYear = new Date().getFullYear().toString();
 
-      // Call leave allocation service (we'll need to import this)
-      // await allocateEmployeeLeaves(employeeUuid, dateOfJoining, currentYear);
+      // Allocate leaves for the employee
+      // This creates leave allocation records in employee_leave_allocation table
+      // Pro-rated based on joining date (if mid-year joiner)
+      await allocateEmployeeLeaves(employeeUuid, dateOfJoining, currentYear);
 
       logger.info('✅ Employee leaves allocated successfully', {
-        employeeUuid
+        employeeUuid,
+        year: currentYear
       });
 
     } catch (leaveError: any) {

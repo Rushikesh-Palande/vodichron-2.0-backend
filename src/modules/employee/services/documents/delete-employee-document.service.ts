@@ -20,13 +20,17 @@
  * ```
  */
 
+import fs from 'fs';
+import path from 'path';
 import { logger, logSecurity } from '../../../../utils/logger';
 import { deleteEmployeeDocumentById } from '../../stores/documents/delete-employee-document.store';
+import { getEmployeeDocumentByDocumentId } from '../../stores/documents/download-employee-document.store';
 import { 
   DeleteEmployeeDocumentInput, 
   DeleteEmployeeDocumentOutput 
 } from '../../schemas/documents/delete-employee-document.schemas';
 import { ApplicationUserRole } from '../../types/employee.types';
+import config from '../../../../config';
 
 /**
  * User Context Interface
@@ -117,21 +121,89 @@ export async function deleteEmployeeDocument(
     });
 
     // ==========================================================================
-    // STEP 4: Call Store Layer to Delete Document
+    // STEP 4: Get Document Info (for file deletion)
     // ==========================================================================
-    logger.debug('🔍 Deleting document from database', {
+    logger.debug('🔍 Fetching document info before deletion', {
+      documentId: input.documentId
+    });
+
+    const documentInfo = await getEmployeeDocumentByDocumentId(input.documentId);
+
+    if (!documentInfo) {
+      logger.warn('⚠️ Document not found', {
+        documentId: input.documentId,
+        employeeId: input.employeeId
+      });
+
+      throw new Error('Document not found');
+    }
+
+    logger.debug('✅ Document info retrieved', {
+      documentId: input.documentId,
+      fileName: documentInfo.fileName
+    });
+
+    // ==========================================================================
+    // STEP 5: Delete Document from Database
+    // ==========================================================================
+    logger.debug('🗑️ Deleting document from database', {
       documentId: input.documentId,
       employeeId: input.employeeId
     });
 
     await deleteEmployeeDocumentById(input.documentId);
 
+    logger.info('✅ Document deleted from database', {
+      documentId: input.documentId
+    });
+
     // ==========================================================================
-    // STEP 5: Log Success and Return
+    // STEP 6: Delete Physical File from Filesystem
+    // ==========================================================================
+    // Implements old code TODO (line 367): "Delete document from the folder"
+    const assetPath = config.asset.path;
+    const filePath = path.join(assetPath, 'employee_documents', documentInfo.fileName);
+
+    logger.debug('📁 Deleting physical file', {
+      documentId: input.documentId,
+      fileName: documentInfo.fileName,
+      filePath
+    });
+
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        
+        logger.info('✅ Physical file deleted successfully', {
+          documentId: input.documentId,
+          fileName: documentInfo.fileName,
+          filePath
+        });
+      } else {
+        logger.warn('⚠️ File not found on filesystem (already deleted or missing)', {
+          documentId: input.documentId,
+          fileName: documentInfo.fileName,
+          filePath
+        });
+      }
+    } catch (fileError: any) {
+      // Log file deletion error but don't fail the operation
+      // Database is already updated, which is the source of truth
+      logger.error('❌ Failed to delete physical file (database already updated)', {
+        documentId: input.documentId,
+        fileName: documentInfo.fileName,
+        filePath,
+        error: fileError.message
+      });
+    }
+
+    // ==========================================================================
+    // STEP 7: Log Success and Return
     // ==========================================================================
     logger.info('✅ Employee document deleted successfully', {
       employeeId: input.employeeId,
       documentId: input.documentId,
+      fileName: documentInfo.fileName,
       deletedBy: user.uuid,
       deletedByRole: user.role
     });

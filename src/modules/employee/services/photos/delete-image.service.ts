@@ -20,10 +20,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import { logger } from '../../../../utils/logger';
+import { logger, logSecurity } from '../../../../utils/logger';
 import { getEmployeePhotoInfo } from '../../stores/photos/get-image.store';
 import { updateEmployeePhoto } from '../../stores/photos/update-photo.store';
 import { DeleteImageInput, DeleteImageOutput } from '../../schemas/photos/delete-image.schemas';
+import { ApplicationUserRole } from '../../types/employee.types';
 
 /**
  * User Context Interface
@@ -57,9 +58,10 @@ interface ServiceConfig {
  *    - Delete file from filesystem
  * 4. Return success
  * 
- * Authorization:
- * - No explicit authorization in old code
- * - Should ideally restrict to self or HR/Admin
+ * Authorization (IMPROVED from old code):
+ * - Employees can delete ONLY their OWN photo
+ * - HR/SuperUser can delete ANY employee's photo
+ * - Old code had no authorization check (security issue fixed)
  * 
  * @param input - Delete image request (employee ID)
  * @param user - Authenticated user context
@@ -82,12 +84,47 @@ export async function deleteEmployeeImage(
 
   try {
     // ==========================================================================
-    // STEP 2: Fetch Employee Photo Information
+    // STEP 2: Authorization Check (NEW - not in old code)
+    // ==========================================================================
+    // Security Improvement: Restrict deletion to self or HR/SuperUser
+    const isOwnPhoto = input.id === user.uuid;
+    const userRole = user.role as ApplicationUserRole;
+    const isHROrSuperUser = 
+      userRole === ApplicationUserRole.hr || 
+      userRole === ApplicationUserRole.superUser;
+
+    if (!isOwnPhoto && !isHROrSuperUser) {
+      logger.warn('⛔ Unauthorized image deletion attempt', {
+        targetEmployee: input.id,
+        attemptedBy: user.uuid,
+        attemptedByRole: user.role,
+        reason: 'User attempting to delete another employee\'s photo without proper permissions'
+      });
+
+      logSecurity('DELETE_IMAGE_ACCESS_DENIED', 'high', {
+        targetEmployee: input.id,
+        userRole: user.role,
+        reason: 'Insufficient permissions'
+      }, undefined, user.uuid);
+
+      throw new Error('Access denied - You can only delete your own photo');
+    }
+
+    logger.debug('✅ Authorization check passed', {
+      targetEmployee: input.id,
+      userId: user.uuid,
+      userRole: user.role,
+      isOwnPhoto,
+      isHROrSuperUser
+    });
+
+    // ==========================================================================
+    // STEP 3: Fetch Employee Photo Information
     // ==========================================================================
     const employeeInfo = await getEmployeePhotoInfo(input.id);
 
     // ==========================================================================
-    // STEP 3: Check if Employee Exists
+    // STEP 4: Check if Employee Exists
     // ==========================================================================
     // Matches old code lines 475-478
     if (!employeeInfo) {
@@ -102,7 +139,7 @@ export async function deleteEmployeeImage(
     const fileName = employeeInfo.recentPhotograph;
 
     // ==========================================================================
-    // STEP 4: Check if Employee Has Photo to Delete
+    // STEP 5: Check if Employee Has Photo to Delete
     // ==========================================================================
     if (!fileName) {
       logger.info('ℹ️ No photo to delete (employee has no photo)', {
@@ -118,7 +155,7 @@ export async function deleteEmployeeImage(
     }
 
     // ==========================================================================
-    // STEP 5: Update Database (Set recentPhotograph to Empty)
+    // STEP 6: Update Database (Set recentPhotograph to Empty)
     // ==========================================================================
     // Matches old code line 484
     logger.debug('📝 Updating database to clear photo field', {
@@ -134,7 +171,7 @@ export async function deleteEmployeeImage(
     });
 
     // ==========================================================================
-    // STEP 6: Delete Physical File from Filesystem
+    // STEP 7: Delete Physical File from Filesystem
     // ==========================================================================
     // Matches old code lines 479-481, 485
     const filePath = path.join(config.assetPath, 'employee_documents', fileName);
@@ -172,7 +209,7 @@ export async function deleteEmployeeImage(
     }
 
     // ==========================================================================
-    // STEP 7: Return Success Response
+    // STEP 8: Return Success Response
     // ==========================================================================
     logger.info('✅ Employee image deleted successfully', {
       employeeId: input.id,
@@ -188,7 +225,7 @@ export async function deleteEmployeeImage(
 
   } catch (error: any) {
     // ==========================================================================
-    // STEP 8: Error Handling
+    // STEP 9: Error Handling
     // ==========================================================================
     logger.error('💥 Delete employee image service error', {
       type: 'DELETE_IMAGE_SERVICE_ERROR',
