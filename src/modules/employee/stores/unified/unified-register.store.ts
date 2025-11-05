@@ -22,7 +22,7 @@
 
 import { sequelize } from '../../../../database';
 import { logger, PerformanceTimer } from '../../../../utils/logger';
-import { insertEmployee, deleteEmployeeById } from '../crud/create.store';
+import { insertEmployee } from '../crud/create.store';
 import { insertApplicationUser } from '../../../users/store/registration/register-user.store';
 import { hashPassword } from '../../../auth/helpers/hash-password.helper';
 import { UnifiedRegisterInput, UserRoleMapping } from '../../schemas/unified/unified-register.schemas';

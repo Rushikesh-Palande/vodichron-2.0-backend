@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { config } from '../config';
 import { testConnection, getDatabaseInfo } from '../database';
-import { logger, logRequest, logSecurity, PerformanceTimer, logPerformance } from '../utils/logger';
+import { logger, logRequest, logSecurity, PerformanceTimer } from '../utils/logger';
 
 /**
  * Health & Documentation Routes

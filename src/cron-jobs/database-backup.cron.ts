@@ -21,7 +21,6 @@
 import { CronJob } from 'cron';
 import { createDatabaseBackup, cleanupOldBackups } from '../services/database-backup.service';
 import { logger, logSystem } from '../utils/logger';
-import { config } from '../config';
 
 /**
  * Backup Configuration
@@ -264,6 +263,7 @@ export function stopBackupCronJob(): void {
     logSystem('BACKUP_CRON_STOPPED', {});
   } catch (error) {
     // Job might not be running
+    void error;
   }
 }
 

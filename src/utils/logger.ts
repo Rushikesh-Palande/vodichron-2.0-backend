@@ -50,21 +50,11 @@ createLogsDirectory();
  * These filters ensure each log file contains only messages of specific levels
  * FIXED: Using info[Symbol.for('level')] to get the actual level after colorization
  */
-const errorFilter = format((info) => {
-  return info.level === 'error' || info[Symbol.for('level')] === 'error' ? info : false;
-});
-
-const warnFilter = format((info) => {
-  return info.level === 'warn' || info[Symbol.for('level')] === 'warn' ? info : false;
-});
-
-const infoFilter = format((info) => {
-  return info.level === 'info' || info[Symbol.for('level')] === 'info' ? info : false;
-});
-
-const debugFilter = format((info) => {
-  return info.level === 'debug' || info[Symbol.for('level')] === 'debug' ? info : false;
-});
+// Log level filters (reserved for future use in separate log files)
+// const _errorFilter = format((info) => info.level === 'error' || info[Symbol.for('level')] === 'error' ? info : false);
+// const _warnFilter = format((info) => info.level === 'warn' || info[Symbol.for('level')] === 'warn' ? info : false);
+// const _infoFilter = format((info) => info.level === 'info' || info[Symbol.for('level')] === 'info' ? info : false);
+// const _debugFilter = format((info) => info.level === 'debug' || info[Symbol.for('level')] === 'debug' ? info : false);
 
 
 /**
@@ -92,7 +82,7 @@ const fileFormat = format.combine(
   format.errors({ stack: true }),
   format.splat(),
   format.uncolorize(),
-  format.printf(({ timestamp, level, message, service, type, ...meta }) => {
+  format.printf(({ timestamp, level, message, _service, type, ...meta }) => {
     logCounter++;
     
     // Extract key metadata
@@ -122,7 +112,6 @@ const fileFormat = format.combine(
     
     // Add remaining metadata if any
     const remainingMeta = Object.keys(otherMeta).filter(key => 
-      !['service', 'version', 'environment'].includes(key) && 
       otherMeta[key] !== undefined && 
       otherMeta[key] !== null
     );
@@ -171,6 +160,7 @@ const developmentFormat = format.combine(
     output += `: ${message}`;
     
     // Add metadata if present (excluding common fields)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { service, version, environment, stack, ...otherMeta } = meta;
     const metaKeys = Object.keys(otherMeta);
     

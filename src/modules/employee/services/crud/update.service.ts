@@ -31,7 +31,7 @@ import {
   insertEmployeeActivity
 } from '../../stores/crud/update.store';
 import { UpdateEmployeeInput } from '../../schemas/crud/update.schemas';
-import { ApplicationUserRole, Employee } from '../../types/employee.types';
+import { ApplicationUserRole } from '../../types/employee.types';
 import { encryptEmployeeSensitiveFields } from '../../helpers/encrypt-employee-sensitive-fields.helper';
 import { hashPassword } from '../../../auth/helpers/hash-password.helper';
 
@@ -268,6 +268,7 @@ export async function updateEmployee(
       }
 
       // Remove password from data before updating employee table
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...dataWithoutPassword } = encryptedEmployeeData;
       Object.assign(encryptedEmployeeData, dataWithoutPassword);
     }

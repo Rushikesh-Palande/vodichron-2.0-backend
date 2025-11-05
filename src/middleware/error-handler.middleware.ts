@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { config } from '../config';
 import { logErrorRequest } from '../utils/log-request';
-import { logger, logSecurity, logRequest, logPerformance, PerformanceTimer } from '../utils/logger';
+import { logger, logSecurity, logRequest, PerformanceTimer } from '../utils/logger';
 
 /**
  * Global Error Handler Middleware

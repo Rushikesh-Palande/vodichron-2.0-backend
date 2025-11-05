@@ -7,7 +7,7 @@ import {
   getEmployeeByUuid,
   insertApplicationUser 
 } from '../store/registration/register-user.store';
-import { registerUserInputSchema, ApplicationUserRole, type RegisterUserInput } from '../schemas/register-user.schemas';
+import { registerUserInputSchema, ApplicationUserRole } from '../schemas/register-user.schemas';
 import { sendEmail } from '../../../services/email.service';
 import { getWelcomeEmailTemplate } from '../templates/welcome-email.template';
 import { config } from '../../../config';

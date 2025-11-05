@@ -48,6 +48,7 @@ export async function getImageExpressController(req: Request, res: Response) {
     // ==========================================================================
     // STEP 2: Validate Input Schema
     // ==========================================================================
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const validatedInput = getImageInputSchema.parse({
       id: req.params.id,
     });

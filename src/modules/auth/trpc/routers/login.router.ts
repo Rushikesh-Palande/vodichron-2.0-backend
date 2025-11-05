@@ -3,7 +3,6 @@ import {
   logger, 
   logAuth, 
   logSecurity, 
-  logPerformance, 
   logDatabase,
   PerformanceTimer 
 } from '../../../../utils/logger';
@@ -150,7 +149,7 @@ export const loginProcedure = publicProcedure
         logSecurity('SUCCESSFUL_LOGIN', 'low', { userType: 'employee', role: user.role }, ip || undefined, user.uuid);
         
         // Log performance metrics
-        const loginDuration = timer.end({ username, userType: 'employee' }, 3000);
+        timer.end({ username, userType: 'employee' }, 3000);
         
         logger.info('✅ Employee login successful', { type: 'AUTH_LOGIN_EMPLOYEE', employeeId: employee.uuid, userUuid: user.uuid });
 
@@ -227,7 +226,7 @@ export const loginProcedure = publicProcedure
         logSecurity('SUCCESSFUL_LOGIN', 'low', { userType: 'customer' }, ip || undefined, customer.uuid);
         
         // Log performance metrics
-        const loginDuration = timer.end({ username, userType: 'customer' }, 3000);
+        timer.end({ username, userType: 'customer' }, 3000);
         
         logger.info('✅ Customer login successful', { type: 'AUTH_LOGIN_CUSTOMER', customerId: customer.uuid });
 

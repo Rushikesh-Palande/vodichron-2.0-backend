@@ -423,7 +423,6 @@ export async function batchDelete(
     };
 
   } catch (error: any) {
-    const duration = Date.now() - startTime;
     timer.end({ error: error.message });
 
     logger.error('❌ Batch delete failed', {

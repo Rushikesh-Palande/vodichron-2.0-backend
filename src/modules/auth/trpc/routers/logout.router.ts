@@ -3,7 +3,6 @@ import {
   logger, 
   logAuth, 
   logSecurity, 
-  logPerformance, 
   logDatabase,
   PerformanceTimer 
 } from '../../../../utils/logger';

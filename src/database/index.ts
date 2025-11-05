@@ -2,7 +2,7 @@ import mysql from 'mysql2/promise';
 import { Sequelize } from 'sequelize';
 
 import { config } from '../config';
-import { logger, logDatabase, logSystem, PerformanceTimer, logPerformance } from '../utils/logger';
+import { logger, logDatabase, logSystem, PerformanceTimer } from '../utils/logger';
 import { retryDatabaseConnection } from '../utils/db-retry-connection';
 
 /**

@@ -2,8 +2,7 @@ import { publicProcedure } from '../../../../trpc/trpc';
 import { 
   logger, 
   logAuth, 
-  logSecurity, 
-  logPerformance, 
+  logSecurity,
   logDatabase,
   PerformanceTimer 
 } from '../../../../utils/logger';

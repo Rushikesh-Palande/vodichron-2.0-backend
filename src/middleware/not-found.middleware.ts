@@ -24,7 +24,7 @@ import { logger, logSecurity } from '../utils/logger';
  * @param res - Express response object
  * @param next - Express next function
  */
-export const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
+export const notFoundHandler = (req: Request, res: Response, _next: NextFunction) => {
   logger.warn(`🚨 404 Not Found: ${req.method} ${req.originalUrl}`, {
     ip: req.ip,
     userAgent: req.get('user-agent'),

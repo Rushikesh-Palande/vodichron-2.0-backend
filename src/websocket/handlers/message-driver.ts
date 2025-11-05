@@ -113,7 +113,7 @@ export async function validateAndProcessMessage(
         });
         break;
         
-      default:
+      default: {
         const unreachable: never = validatedMessage;
         logger.warn('🚫 Unsupported message type', {
           messageType: unreachable
@@ -124,6 +124,7 @@ export async function validateAndProcessMessage(
           message: 'Unsupported message type',
           code: 'UNSUPPORTED_MESSAGE_TYPE'
         });
+      }
     }
 
     logger.debug('📤 Sending WebSocket response', {

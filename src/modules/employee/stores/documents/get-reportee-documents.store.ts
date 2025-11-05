@@ -76,7 +76,6 @@ export async function getPaginatedEmployeeDocumentsAll(
     // STEP 2: Build Query Parameters and Filter Clauses
     // ==========================================================================
     // Matches old code lines 423-434
-    const queryParams: any[] = [loggedInUserId]; // First param: exclude logged-in user
     const filterClauses: string[] = [];
 
     // Optional filter by hrApprovalStatus (lines 426-429)
