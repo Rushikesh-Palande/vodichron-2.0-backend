@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { logger } from '../../../utils/logger';
 import { validateResetLinkService } from '../services/validate-reset-link.service';
+import { validateResetLinkSchema } from '../schemas/validate-reset-link.schema';
 import { config } from '../../../config';
 
 /**
@@ -31,10 +32,26 @@ export async function validateResetLinkController(req: Request, res: Response) {
       });
     }
     
-    const { sec } = req.body;
+    const { key, sec } = req.body;
     const clientIp = req.ip || 'unknown';
 
-    const result = await validateResetLinkService(sec, clientIp);
+    // Validate input using schema
+    const validation = validateResetLinkSchema.safeParse({ key, sec });
+    if (!validation.success) {
+      logger.warn('⚠️ Validate reset link validation failed', {
+        type: 'VALIDATE_RESET_LINK_VALIDATION_ERROR',
+        issues: validation.error.issues
+      });
+      return res.status(400).json({
+        success: false,
+        message: validation.error.issues[0]?.message || 'Validation failed',
+        code: 'VALIDATION_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const validatedData = validation.data;
+    const result = await validateResetLinkService(validatedData.sec, clientIp);
 
     if (result) {
       return res.status(200).json({

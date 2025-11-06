@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { logger } from '../../../utils/logger';
 import { resetPasswordService } from '../services/reset-password.service';
+import { resetPasswordSchema } from '../schemas/reset-password.schema';
 
 /**
  * Reset Password Controller
@@ -10,13 +11,37 @@ import { resetPasswordService } from '../services/reset-password.service';
  * Route: POST /api/auth/reset-password
  * Auth: Public (no auth required)
  * Body: { email: string, sec: string, password: string }
+ * 
+ * Password Requirements:
+ * - Minimum 8 characters
+ * - At least one uppercase letter (A-Z)
+ * - At least one lowercase letter (a-z)
+ * - At least one number (0-9)
+ * - At least one special character (@$!%*?&)
  */
 export async function resetPasswordController(req: Request, res: Response) {
   try {
     const { email, sec, password } = req.body;
     const clientIp = req.ip || 'unknown';
 
-    await resetPasswordService(email, sec, password, clientIp);
+    // Validate input using schema
+    const validation = resetPasswordSchema.safeParse({ email, sec, password });
+    if (!validation.success) {
+      logger.warn('⚠️ Reset password validation failed', {
+        type: 'RESET_PASSWORD_VALIDATION_ERROR',
+        issues: validation.error.issues,
+        email
+      });
+      return res.status(400).json({
+        success: false,
+        message: validation.error.issues[0]?.message || 'Validation failed',
+        code: 'VALIDATION_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const validatedData = validation.data;
+    await resetPasswordService(validatedData.email, validatedData.sec, validatedData.password, clientIp);
 
     return res.status(200).json({
       success: true,

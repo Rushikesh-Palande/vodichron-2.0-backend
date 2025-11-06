@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { logger } from '../../../utils/logger';
 import { generateResetLinkService } from '../services/generate-reset-link.service';
+import { generateResetLinkSchema } from '../schemas/generate-reset-link.schema';
 
 /**
  * Generate Reset Link Controller
@@ -16,7 +17,23 @@ export async function generateResetLinkController(req: Request, res: Response) {
     const { username } = req.body;
     const clientIp = req.ip || 'unknown';
 
-    await generateResetLinkService(username, clientIp);
+    // Validate input using schema
+    const validation = generateResetLinkSchema.safeParse({ username });
+    if (!validation.success) {
+      logger.warn('⚠️ Generate reset link validation failed', {
+        type: 'GENERATE_RESET_LINK_VALIDATION_ERROR',
+        issues: validation.error.issues
+      });
+      return res.status(400).json({
+        success: false,
+        message: validation.error.issues[0]?.message || 'Validation failed',
+        code: 'VALIDATION_ERROR',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const validatedData = validation.data;
+    await generateResetLinkService(validatedData.username, clientIp);
 
     return res.status(200).json({
       success: true,
