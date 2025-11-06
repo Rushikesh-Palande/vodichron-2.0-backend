@@ -1,5 +1,6 @@
 import { router } from '../../../trpc/trpc';
 import { getMasterDataProcedure } from './routers/get-master-data.router';
+import { updateMasterDataProcedure } from './routers/update-master-data.router';
 
 /**
  * Vodichron HRMS Master Data tRPC Router
@@ -14,7 +15,9 @@ import { getMasterDataProcedure } from './routers/get-master-data.router';
  * 
  * Procedures:
  * - get: Fetch all master data configuration (designation, department, etc.)
+ * - update: Update master data configuration (HR/Admin only)
  */
 export const masterDataRouter = router({
   get: getMasterDataProcedure,
+  update: updateMasterDataProcedure,
 });

@@ -128,3 +128,144 @@ export async function getAllMasterFields(): Promise<MasterField[]> {
     throw error;
   }
 }
+
+/**
+ * Update Master Field
+ * ===================
+ * Updates a single master data field in the database
+ * 
+ * Based on: old vodichron updateMasterField (appMasterDataStores.ts lines 38-47)
+ * 
+ * Database Query Structure:
+ * ------------------------
+ * UPDATE application_master_data
+ * SET value = ?, updatedAt = NOW(), updatedBy = ?
+ * WHERE name = ?
+ * 
+ * Features:
+ * - Updates by field name (not UUID)
+ * - Stringifies value array to JSON
+ * - Automatically sets updatedAt timestamp
+ * - Records who made the update (updatedBy)
+ * 
+ * Business Logic:
+ * - Does NOT update: uuid, name, createdAt, createdBy
+ * - Only updates: value, updatedAt, updatedBy
+ * - Used for HR configuration changes
+ * 
+ * Security:
+ * - Service layer must enforce HR/SuperUser authorization
+ * - Store layer only handles database operation
+ * 
+ * @param name - The field name to update (e.g., 'designation')
+ * @param value - New array of values for this field
+ * @param userId - UUID of user making the update (for audit trail)
+ * @returns Number of rows affected (should be 1)
+ * @throws Error if update fails
+ */
+export async function updateMasterField(
+  name: string,
+  value: string[],
+  userId: string
+): Promise<number> {
+  // ============================================================================
+  // STEP 1: Initialize Performance Timer
+  // ============================================================================
+  const timer = new PerformanceTimer('updateMasterField');
+
+  try {
+    logger.info('📝 Updating master data field', {
+      fieldName: name,
+      valueCount: value.length,
+      updatedBy: userId,
+      operation: 'updateMasterField_store'
+    });
+
+    // ==========================================================================
+    // STEP 2: Prepare Data
+    // ==========================================================================
+    // Stringify value array to JSON format for database storage
+    const valueJson = JSON.stringify(value);
+
+    logger.debug('🔄 Value stringified for database', {
+      fieldName: name,
+      originalLength: value.length,
+      jsonLength: valueJson.length,
+      operation: 'updateMasterField_store'
+    });
+
+    // ==========================================================================
+    // STEP 3: Construct SQL Update Query
+    // ==========================================================================
+    // Matches old code: updateMasterField (line 41)
+    // UPDATE application_master_data 
+    // SET value = ?, updatedAt = ?, updatedBy = ? 
+    // WHERE name = ?
+    const sql = `
+      UPDATE application_master_data 
+      SET 
+        value = ?,
+        updatedAt = NOW(),
+        updatedBy = ?
+      WHERE name = ?
+    `;
+
+    // ==========================================================================
+    // STEP 4: Execute Database Update
+    // ==========================================================================
+    const [, rowsAffected] = await sequelize.query(sql, {
+      replacements: [valueJson, userId, name],
+      type: QueryTypes.UPDATE
+    });
+
+    // ==========================================================================
+    // STEP 5: Stop Timer and Log Performance
+    // ==========================================================================
+    const duration = timer.end();
+    logDatabase('UPDATE_MASTER_FIELD', name, duration);
+
+    logger.info('✅ Master data field updated successfully', {
+      fieldName: name,
+      rowsAffected,
+      duration: `${duration}ms`,
+      operation: 'updateMasterField_store'
+    });
+
+    // ==========================================================================
+    // STEP 6: Validate Update
+    // ==========================================================================
+    // Should affect exactly 1 row (the matching field)
+    if (rowsAffected === 0) {
+      logger.warn('⚠️ No rows affected - field may not exist', {
+        fieldName: name,
+        operation: 'updateMasterField_store'
+      });
+    } else if (rowsAffected > 1) {
+      logger.error('❌ Multiple rows affected - data integrity issue', {
+        fieldName: name,
+        rowsAffected,
+        operation: 'updateMasterField_store'
+      });
+    }
+
+    return rowsAffected;
+
+  } catch (error) {
+    // ==========================================================================
+    // STEP 7: Error Handling
+    // ==========================================================================
+    const duration = timer.end();
+    const errorObj = error instanceof Error ? error : undefined;
+    logDatabase('UPDATE_MASTER_FIELD_ERROR', name, duration, errorObj);
+
+    logger.error('💥 Failed to update master data field', {
+      fieldName: name,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: `${duration}ms`,
+      operation: 'updateMasterField_store'
+    });
+
+    throw error;
+  }
+}
