@@ -91,8 +91,20 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            echo "🧩 Installing dependencies..."
-            npm ci --production
+            echo "🧩 Ensuring correct permissions..."
+            sudo chown -R $USER:$USER /var/www/vodichron/vodichron-backend
+
+            echo "📦 Installing dependencies..."
+            if [ -d "node_modules" ]; then
+              echo "🧹 Removing existing node_modules..."
+              rm -rf node_modules
+            fi
+
+            npm ci --production || npm install --production
+            if [ $? -ne 0 ]; then
+              echo "❌ npm install failed. Exiting..."
+              exit 1
+            fi
 
             echo "⚙️ Building production..."
             npm run build:clean
@@ -105,30 +117,35 @@ jobs:
       - name: 🔍 Verify Health Endpoint
         continue-on-error: true
         run: |
-          echo "⏳ Waiting for app to start..."
-          sleep 15
-          
-          MAX_RETRIES=5
+          echo "⏳ Waiting for app to boot fully..."
+          sleep 20
+
+          MAX_RETRIES=9
           RETRY_DELAY=10
-          
+
           for i in $(seq 1 $MAX_RETRIES); do
             echo "🌡️ Health check attempt $i/$MAX_RETRIES..."
-            
+
             HEALTH_CHECK=$(curl -sk -o /dev/null -w "%{http_code}" https://${{ secrets.PROD_DOMAIN }}/health 2>/dev/null || \
                            curl -sk -o /dev/null -w "%{http_code}" http://${{ secrets.PROD_DOMAIN }}/health 2>/dev/null || echo "000")
-            
+
             if [ "$HEALTH_CHECK" = "200" ]; then
               echo "✅ Health check passed for ${{ secrets.PROD_DOMAIN }}/health"
               exit 0
+            elif [ "$HEALTH_CHECK" = "503" ]; then
+              echo "⚠️ Server returned 503 (still starting up)..."
+            elif [ "$HEALTH_CHECK" = "000" ]; then
+              echo "❌ Could not connect to domain (timeout or DNS issue)."
+            else
+              echo "❌ Health check failed (status: $HEALTH_CHECK)"
             fi
-            
-            echo "❌ Health check failed (status: $HEALTH_CHECK)"
+
             if [ $i -lt $MAX_RETRIES ]; then
               echo "🔁 Retrying in ${RETRY_DELAY}s..."
               sleep $RETRY_DELAY
             fi
           done
-          
+
           echo "🚨 Health check failed after $MAX_RETRIES attempts"
           exit 1
 
@@ -174,8 +191,20 @@ jobs:
             git fetch origin develop
             git reset --hard origin/develop
 
-            echo "🧩 Installing dependencies..."
-            npm ci --production
+            echo "🧩 Ensuring correct permissions..."
+            sudo chown -R $USER:$USER /var/www/vodichron-backend-staging
+
+            echo "📦 Installing dependencies..."
+            if [ -d "node_modules" ]; then
+              echo "🧹 Removing existing node_modules..."
+              rm -rf node_modules
+            fi
+
+            npm ci --production || npm install --production
+            if [ $? -ne 0 ]; then
+              echo "❌ npm install failed. Exiting..."
+              exit 1
+            fi
 
             echo "⚙️ Building staging build..."
             npm run build:clean
@@ -188,22 +217,31 @@ jobs:
       - name: 🔍 Verify Staging Health Endpoint
         continue-on-error: true
         run: |
-          echo "⏳ Waiting for staging app to start..."
-          sleep 15
+          echo "⏳ Waiting for staging app to boot..."
+          sleep 20
 
-          for i in $(seq 1 5); do
-            echo "🌡️ Staging health check attempt $i/5..."
-            
+          MAX_RETRIES=9
+          RETRY_DELAY=10
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "🌡️ Health check attempt $i/$MAX_RETRIES..."
+
             HEALTH_CHECK=$(curl -sk -o /dev/null -w "%{http_code}" https://${{ secrets.STAGING_DOMAIN }}/health 2>/dev/null || \
                            curl -sk -o /dev/null -w "%{http_code}" http://${{ secrets.STAGING_DOMAIN }}/health 2>/dev/null || echo "000")
 
             if [ "$HEALTH_CHECK" = "200" ]; then
               echo "✅ Staging health check passed"
               exit 0
+            elif [ "$HEALTH_CHECK" = "503" ]; then
+              echo "⚠️ Staging server still starting..."
+            else
+              echo "❌ Staging health check failed (status: $HEALTH_CHECK)"
             fi
 
-            echo "❌ Staging health check failed (status: $HEALTH_CHECK)"
-            [ $i -lt 5 ] && echo "🔁 Retrying..." && sleep 10
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "🔁 Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
           done
 
           echo "🚨 Staging health check failed after retries"
