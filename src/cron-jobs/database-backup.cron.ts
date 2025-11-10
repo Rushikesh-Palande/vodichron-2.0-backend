@@ -21,24 +21,35 @@
 import { CronJob } from 'cron';
 import { createDatabaseBackup, cleanupOldBackups } from '../services/database-backup.service';
 import { logger, logSystem } from '../utils/logger';
+import { 
+  DATABASE_BACKUP_SCHEDULE,
+  CRON_TIMEZONE,
+  CRON_ENABLED,
+  CRON_CONFIG,
+  SCHEDULE_DESCRIPTIONS
+} from './config/cron-schedules';
 
 /**
  * Backup Configuration
  * ===================
+ * 
+ * Configuration is now managed in src/cron-jobs/config/cron-schedules.ts
+ * Simple format: { enabled: true, interval: '1 hour', runAt: null }
  */
 const BACKUP_CONFIG = {
-  // Cron schedule: Every hour (at minute 0)
-  schedule: '0 * * * *', // "At minute 0 of every hour"
+  // Cron schedule (from centralized config)
+  schedule: DATABASE_BACKUP_SCHEDULE,
+  scheduleDescription: SCHEDULE_DESCRIPTIONS.databaseBackup,
   
   // Backup settings
   encrypt: true,
-  retentionDays: 30, // Keep backups for 30 days
+  retentionDays: CRON_CONFIG.backupRetentionDays,
   
-  // Timezone for cron (optional, defaults to Asia/Kolkata)
-  timezone: 'Asia/Kolkata',
+  // Timezone (from centralized config)
+  timezone: CRON_TIMEZONE,
   
-  // Enable/disable backup job
-  enabled: true,
+  // Enable/disable backup job (from centralized config)
+  enabled: CRON_ENABLED.databaseBackup,
 };
 
 /**
@@ -83,7 +94,8 @@ async function executeBackupJob(): Promise<void> {
   try {
     logger.info('⏰ Hourly backup cron job triggered', {
       timestamp: new Date().toISOString(),
-      schedule: BACKUP_CONFIG.schedule
+      schedule: BACKUP_CONFIG.schedule,
+      scheduleDescription: BACKUP_CONFIG.scheduleDescription
     });
 
     logSystem('BACKUP_CRON_START', {

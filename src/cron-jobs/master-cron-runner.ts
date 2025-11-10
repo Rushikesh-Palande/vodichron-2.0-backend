@@ -9,6 +9,7 @@
  */
 
 import { startBackupCronJob, stopBackupCronJob, getBackupCronJobStatus } from './database-backup.cron';
+import { startSessionCleanupCronJob, stopSessionCleanupCronJob, getSessionCleanupCronJobStatus } from '../modules/auth/cron/session-cleanup.cron';
 import { logger } from '../utils/logger';
 
 /**
@@ -32,12 +33,20 @@ export async function startAllCronJobs(): Promise<void> {
     logger.info('');
     
     // ========================================================================
+    // Cron Job 2: Session Cleanup (Every 30 minutes)
+    // ========================================================================
+    logger.info('🧹 Step 2: Starting session cleanup cron job...');
+    startSessionCleanupCronJob();
+    logger.info('✅ Step 2: Session cleanup cron job started');
+    logger.info('');
+    
+    // ========================================================================
     // Add more cron jobs here as needed
     // ========================================================================
     // Example:
-    // logger.info('📧 Step 2: Starting email notification cron job...');
+    // logger.info('📧 Step 3: Starting email notification cron job...');
     // startEmailCronJob();
-    // logger.info('✅ Step 2: Email notification cron job started');
+    // logger.info('✅ Step 3: Email notification cron job started');
     // logger.info('');
     
     // ========================================================================
@@ -47,6 +56,7 @@ export async function startAllCronJobs(): Promise<void> {
     logger.info('');
     logger.info('📋 Active Cron Jobs:');
     logger.info('   1. Database Backup - Every hour (overwrites daily file)');
+    logger.info('   2. Session Cleanup - Every 30 minutes (marks expired sessions offline)');
     logger.info('');
     
   } catch (error: any) {
@@ -73,6 +83,9 @@ export function stopAllCronJobs(): void {
     // Stop database backup cron job
     stopBackupCronJob();
     
+    // Stop session cleanup cron job
+    stopSessionCleanupCronJob();
+    
     // Stop other cron jobs here...
     // stopEmailCronJob();
     
@@ -96,10 +109,12 @@ export function stopAllCronJobs(): void {
  */
 export function getAllCronJobsStatus(): {
   databaseBackup: ReturnType<typeof getBackupCronJobStatus>;
+  sessionCleanup: ReturnType<typeof getSessionCleanupCronJobStatus>;
   // Add more cron job statuses here...
 } {
   return {
     databaseBackup: getBackupCronJobStatus(),
+    sessionCleanup: getSessionCleanupCronJobStatus(),
     // emailNotifications: getEmailCronJobStatus(),
   };
 }
@@ -110,5 +125,8 @@ export function getAllCronJobsStatus(): {
 export {
   startBackupCronJob,
   stopBackupCronJob,
-  getBackupCronJobStatus
+  getBackupCronJobStatus,
+  startSessionCleanupCronJob,
+  stopSessionCleanupCronJob,
+  getSessionCleanupCronJobStatus
 };
