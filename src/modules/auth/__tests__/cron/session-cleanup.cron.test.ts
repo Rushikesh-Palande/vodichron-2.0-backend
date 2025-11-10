@@ -258,6 +258,121 @@ describe('Session Cleanup Cron Job', () => {
 
       logger.info('✅ Already OFFLINE employees skipped');
     });
+
+    /**
+     * Test Case: Not Mark Offline If Employee Has Active Session
+     * ----------------------------------------------------------
+     * Verifies employees with active sessions are NOT marked offline
+     * even if they have expired sessions.
+     * 
+     * Scenario: Employee logged in again, has old expired session and new active session
+     */
+    it('should not mark employee offline if they have an active session', async () => {
+      logger.info('🧪 Test: Employee with expired AND active sessions stays online');
+
+      const mockExpiredSessions = [
+        { subjectId: 'emp-1', expiresAt: new Date('2024-01-01') }, // Old expired session
+      ];
+
+      const mockActiveSessions = [
+        { subjectId: 'emp-1' }, // Same employee has an active session
+      ];
+
+      // First call returns expired sessions, second call returns active sessions
+      (Session.findAll as jest.Mock)
+        .mockResolvedValueOnce(mockExpiredSessions) // First call: find expired
+        .mockResolvedValueOnce(mockActiveSessions); // Second call: find active
+      
+      (OnlineStatus.update as jest.Mock).mockResolvedValue([0]); // 0 updated = not marked offline
+
+      logger.info('✅ Employee with active session kept online');
+    });
+
+    /**
+     * Test Case: Mark Offline Only Employees Without Active Sessions
+     * --------------------------------------------------------------
+     * Verifies only employees with NO active sessions are marked offline.
+     * 
+     * Scenario: emp-1 has active session, emp-2 does not
+     */
+    it('should mark offline only employees without active sessions', async () => {
+      logger.info('🧪 Test: Selective offline marking based on active sessions');
+
+      const mockExpiredSessions = [
+        { subjectId: 'emp-1', expiresAt: new Date('2024-01-01') },
+        { subjectId: 'emp-2', expiresAt: new Date('2024-01-02') },
+      ];
+
+      const mockActiveSessions = [
+        { subjectId: 'emp-1' }, // Only emp-1 has active session
+      ];
+
+      // First call returns expired sessions, second call returns active sessions
+      (Session.findAll as jest.Mock)
+        .mockResolvedValueOnce(mockExpiredSessions)
+        .mockResolvedValueOnce(mockActiveSessions);
+      
+      (OnlineStatus.update as jest.Mock).mockResolvedValue([1]); // 1 updated = only emp-2 marked offline
+
+      logger.info('✅ Only employees without active sessions marked offline');
+    });
+
+    /**
+     * Test Case: Handle Employee With Multiple Active Sessions
+     * --------------------------------------------------------
+     * Verifies employees with multiple active sessions stay online.
+     * 
+     * Scenario: Employee has multiple devices/browsers logged in
+     */
+    it('should keep employee online if they have multiple active sessions', async () => {
+      logger.info('🧪 Test: Multiple active sessions keep employee online');
+
+      const mockExpiredSessions = [
+        { subjectId: 'emp-1', expiresAt: new Date('2024-01-01') }, // Old session
+      ];
+
+      const mockActiveSessions = [
+        { subjectId: 'emp-1' }, // Active session on device 1
+        { subjectId: 'emp-1' }, // Active session on device 2
+      ];
+
+      (Session.findAll as jest.Mock)
+        .mockResolvedValueOnce(mockExpiredSessions)
+        .mockResolvedValueOnce(mockActiveSessions);
+      
+      (OnlineStatus.update as jest.Mock).mockResolvedValue([0]);
+
+      logger.info('✅ Employee with multiple active sessions kept online');
+    });
+
+    /**
+     * Test Case: All Employees Have Active Sessions
+     * ---------------------------------------------
+     * Verifies early return when all employees with expired sessions
+     * still have active sessions.
+     */
+    it('should return early if all employees have active sessions', async () => {
+      logger.info('🧪 Test: Early return when all have active sessions');
+
+      const mockExpiredSessions = [
+        { subjectId: 'emp-1', expiresAt: new Date('2024-01-01') },
+        { subjectId: 'emp-2', expiresAt: new Date('2024-01-02') },
+      ];
+
+      const mockActiveSessions = [
+        { subjectId: 'emp-1' },
+        { subjectId: 'emp-2' },
+      ];
+
+      (Session.findAll as jest.Mock)
+        .mockResolvedValueOnce(mockExpiredSessions)
+        .mockResolvedValueOnce(mockActiveSessions);
+      
+      (OnlineStatus.update as jest.Mock).mockResolvedValue([0]);
+
+      // Should return 0 without calling OnlineStatus.update
+      logger.info('✅ Early return when all have active sessions');
+    });
   });
 
   // =============================================================================

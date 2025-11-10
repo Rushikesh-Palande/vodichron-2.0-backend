@@ -121,21 +121,68 @@ async function updateOfflineStatusForExpiredSessions(): Promise<number> {
     });
 
     // ========================================================================
-    // STEP 3: Update Online Status to OFFLINE
+    // STEP 3: Filter Out Employees With Active Sessions
     // ========================================================================
-    logger.info('🔄 Step 3: Updating employee online status to OFFLINE...');
+    logger.info('🔍 Step 3: Checking for employees with active sessions...');
+    
+    // Find employees who still have at least one active (non-expired) session
+    const activeSessions = await Session.findAll({
+      where: {
+        subjectType: 'employee',
+        subjectId: {
+          [Op.in]: employeeIds,
+        },
+        expiresAt: {
+          [Op.gte]: now, // expiresAt >= NOW (not expired)
+        },
+        revokedAt: null,
+      },
+      attributes: ['subjectId'],
+      raw: true,
+    });
+    
+    const employeesWithActiveSessions = new Set(activeSessions.map((s: any) => s.subjectId));
+    
+    logger.info('✅ Step 3.1: Found employees with active sessions', {
+      totalExpiredSessionEmployees: employeeIds.length,
+      employeesWithActiveSessions: employeesWithActiveSessions.size,
+    });
+    
+    // Filter to only employees who have NO active sessions
+    const employeesToMarkOffline = employeeIds.filter(id => !employeesWithActiveSessions.has(id));
+    
+    if (employeesToMarkOffline.length === 0) {
+      const duration = timer.end();
+      logger.info('ℹ️ All employees with expired sessions still have active sessions - no status update needed', {
+        duration: `${duration}ms`,
+        totalEmployeesChecked: employeeIds.length,
+        employeesWithActiveSessions: employeesWithActiveSessions.size,
+      });
+      logDatabase('SELECT', 'sessions', duration, undefined, 0);
+      return 0;
+    }
+    
+    logger.info('📋 Step 3.2: Employees to mark offline', {
+      count: employeesToMarkOffline.length,
+      employeesWithActiveSessions: employeesWithActiveSessions.size,
+    });
+    
+    // ========================================================================
+    // STEP 4: Update Online Status to OFFLINE
+    // ========================================================================
+    logger.info('🔄 Step 4: Updating employee online status to OFFLINE...');
     
     const updateTimer = new PerformanceTimer('Bulk Update Online Status');
     
     const [updatedCount] = await OnlineStatus.update(
       {
         onlineStatus: 'OFFLINE',
-        // Note: updatedAt field is nullable and not auto-managed, leaving it as is
+        updatedAt: now,
       },
       {
         where: {
           employeeId: {
-            [Op.in]: employeeIds,
+            [Op.in]: employeesToMarkOffline,
           },
           onlineStatus: {
             [Op.ne]: 'OFFLINE', // Only update if not already OFFLINE
@@ -147,20 +194,24 @@ async function updateOfflineStatusForExpiredSessions(): Promise<number> {
     const updateDuration = updateTimer.end();
     logDatabase('UPDATE', 'employee_online_status', updateDuration, undefined, updatedCount);
 
-    logger.info('✅ Step 3.1: Employee online status updated successfully', {
+    logger.info('✅ Step 4.1: Employee online status updated successfully', {
       updatedCount,
-      employeesProcessed: employeeIds.length,
+      employeesToMarkOffline: employeesToMarkOffline.length,
+      employeesWithActiveSessions: employeesWithActiveSessions.size,
+      totalEmployeesWithExpiredSessions: employeeIds.length,
       expiredSessions: expiredSessionCount,
     });
 
     // ========================================================================
-    // STEP 4: Log Success
+    // STEP 5: Log Success
     // ========================================================================
     const totalDuration = timer.end();
     
     logSystem('SESSION_CLEANUP_OFFLINE_UPDATE', {
       expiredSessions: expiredSessionCount,
-      uniqueEmployees: employeeIds.length,
+      uniqueEmployeesWithExpiredSessions: employeeIds.length,
+      employeesWithActiveSessions: employeesWithActiveSessions.size,
+      employeesMarkedOffline: employeesToMarkOffline.length,
       statusUpdated: updatedCount,
       duration: `${totalDuration}ms`,
     });
