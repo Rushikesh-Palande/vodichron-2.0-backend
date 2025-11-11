@@ -26,14 +26,45 @@ export interface WeeklyTimesheetAttributes {
   requestNumber: number;
   weekStartDate: Date;
   weekEndDate: Date;
-  taskDetails: any; // JSON
+  
+  // Task Identification
+  taskId: string | null;
+  
+  // Project/Client Information
+  customer: string | null;
+  project: string | null;
+  manager: string | null;
+  
+  // Task Details
+  taskBrief: string | null;
+  taskStatus: 'Not Started' | 'In Progress' | 'Completed' | 'On Hold' | null;
+  responsible: string | null;
+  
+  // Date Tracking
+  plannedStartDate: Date | null;
+  plannedEndDate: Date | null;
+  actualStartDate: Date | null;
+  actualEndDate: Date | null;
+  
+  // Progress Tracking
+  completionPercentage: number | null;
+  remarks: string | null;
+  reasonForDelay: string | null;
+  
+  // Time Tracking
+  taskHours: string | null; // Format: HH:MM
+  taskDetails: any; // JSON (for backward compatibility)
   totalHours: number;
+  
+  // Approval Workflow
   approvalStatus: 'REQUESTED' | 'APPROVED' | 'REJECTED' | null;
   approverId: string | null;
   approverRole: string | null;
   approvalDate: Date | null;
   approverComments: string | null;
   timeSheetStatus: 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'SAVED';
+  
+  // Audit Fields
   createdAt: Date;
   createdBy: string;
   updatedAt: Date | null;
@@ -43,5 +74,28 @@ export interface WeeklyTimesheetAttributes {
 export interface WeeklyTimesheetCreationAttributes
   extends Optional<
     WeeklyTimesheetAttributes,
-    'uuid' | 'approvalStatus' | 'approverId' | 'approverRole' | 'approvalDate' | 'approverComments' | 'timeSheetStatus' | 'createdAt' | 'updatedAt'
+    | 'uuid'
+    | 'taskId'
+    | 'customer'
+    | 'project'
+    | 'manager'
+    | 'taskBrief'
+    | 'taskStatus'
+    | 'responsible'
+    | 'plannedStartDate'
+    | 'plannedEndDate'
+    | 'actualStartDate'
+    | 'actualEndDate'
+    | 'completionPercentage'
+    | 'remarks'
+    | 'reasonForDelay'
+    | 'taskHours'
+    | 'approvalStatus'
+    | 'approverId'
+    | 'approverRole'
+    | 'approvalDate'
+    | 'approverComments'
+    | 'timeSheetStatus'
+    | 'createdAt'
+    | 'updatedAt'
   > {}

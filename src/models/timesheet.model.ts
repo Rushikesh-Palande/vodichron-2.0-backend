@@ -37,12 +37,43 @@ class Timesheet extends Model<TimesheetAttributes, TimesheetCreationAttributes> 
   public employeeId!: string;                               // Foreign key referencing the employees table.
   public requestNumber!: number;                            // Sequential request number for tracking.
   public timesheetDate!: Date;                              // Date for which the timesheet is submitted.
-  public taskDetails!: any;                                 // JSON containing task descriptions and hours.
+  
+  // Task Identification
+  public taskId!: string | null;                            // Task identifier (e.g., TASK001).
+  
+  // Project/Client Information
+  public customer!: string | null;                          // Customer/client name.
+  public project!: string | null;                           // Project name.
+  public manager!: string | null;                           // Manager/Lead name.
+  
+  // Task Details
+  public taskBrief!: string | null;                         // Task description.
+  public taskStatus!: 'Not Started' | 'In Progress' | 'Completed' | 'On Hold' | null; // Task status.
+  public responsible!: string | null;                       // Person responsible.
+  
+  // Date Tracking
+  public plannedStartDate!: Date | null;                    // Planned start date.
+  public plannedEndDate!: Date | null;                      // Planned end date.
+  public actualStartDate!: Date | null;                     // Actual start date.
+  public actualEndDate!: Date | null;                       // Actual end date.
+  
+  // Progress Tracking
+  public completionPercentage!: number | null;              // Progress percentage (0-100).
+  public remarks!: string | null;                           // Additional notes.
+  public reasonForDelay!: string | null;                    // Delay explanation.
+  
+  // Time Tracking
+  public taskHours!: string | null;                         // Hours for this task (HH:MM format).
+  public taskDetails!: any;                                 // JSON containing task descriptions and hours (legacy).
   public totalHours!: number;                               // Total hours worked on the date.
+  
+  // Approval Workflow
   public approvalStatus!: 'REQUESTED' | 'APPROVED' | 'REJECTED'; // Current approval status.
   public approverId!: string | null;                        // User ID of the approver.
   public approvalDate!: Date | null;                        // Date when timesheet was approved/rejected.
   public approverComments!: string | null;                  // Comments from the approver.
+  
+  // Audit Fields
   public createdAt!: Date;                                  // Timestamp when the timesheet was created.
   public createdBy!: string;                                // User who created the timesheet.
   public updatedAt!: Date | null;                           // Timestamp when the timesheet was last updated.
@@ -84,6 +115,145 @@ Timesheet.init(
       type: DataTypes.DATEONLY,
       allowNull: false,
       comment: 'Date for which the timesheet is submitted',
+    },
+    
+    // ====================================================================================
+    // TASK IDENTIFICATION
+    // ====================================================================================
+    // 'taskId' field: unique identifier for the task (e.g., TASK001, TASK002).
+    // Used for task tracking and reference across the organization.
+    taskId: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: 'Task identifier (e.g., TASK001)',
+    },
+    
+    // ====================================================================================
+    // PROJECT/CLIENT INFORMATION
+    // ====================================================================================
+    // 'customer' field: name of the customer or client for whom the task is performed.
+    // Used for billing and client reporting.
+    customer: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Customer/client name',
+    },
+    // 'project' field: name of the project the task belongs to.
+    // Links tasks to specific projects for tracking and reporting.
+    project: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Project name',
+    },
+    // 'manager' field: name of the manager or lead overseeing the task.
+    // Used for escalation and approval workflows.
+    manager: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Manager/Lead name',
+    },
+    
+    // ====================================================================================
+    // TASK DETAILS
+    // ====================================================================================
+    // 'taskBrief' field: detailed description of the task.
+    // Provides context and specifications for the work performed.
+    taskBrief: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Task description',
+    },
+    // 'taskStatus' field: current status of the task.
+    // Tracks task progress through its lifecycle.
+    taskStatus: {
+      type: DataTypes.ENUM('Not Started', 'In Progress', 'Completed', 'On Hold'),
+      allowNull: true,
+      validate: {
+        isIn: [['Not Started', 'In Progress', 'Completed', 'On Hold']],
+      },
+      comment: 'Current status of the task',
+    },
+    // 'responsible' field: name of the person responsible for completing the task.
+    // May be different from the employee submitting the timesheet.
+    responsible: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Person responsible for the task',
+    },
+    
+    // ====================================================================================
+    // DATE TRACKING
+    // ====================================================================================
+    // 'plannedStartDate' field: originally planned start date for the task.
+    // Used for project planning and deadline tracking.
+    plannedStartDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      comment: 'Planned start date',
+    },
+    // 'plannedEndDate' field: originally planned completion date for the task.
+    // Used for deadline management and schedule tracking.
+    plannedEndDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      comment: 'Planned end date',
+    },
+    // 'actualStartDate' field: actual date when work on the task began.
+    // Used for analyzing scheduling accuracy and delays.
+    actualStartDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      comment: 'Actual start date',
+    },
+    // 'actualEndDate' field: actual date when the task was completed.
+    // Used for completion tracking and timeline analysis.
+    actualEndDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      comment: 'Actual end date',
+    },
+    
+    // ====================================================================================
+    // PROGRESS TRACKING
+    // ====================================================================================
+    // 'completionPercentage' field: percentage of task completion (0-100).
+    // Provides quantitative progress tracking.
+    completionPercentage: {
+      type: DataTypes.TINYINT,
+      allowNull: true,
+      validate: {
+        min: 0,
+        max: 100,
+      },
+      comment: 'Task completion percentage (0-100)',
+    },
+    // 'remarks' field: additional notes or comments about the task.
+    // Provides context, updates, or important information.
+    remarks: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Additional notes or comments',
+    },
+    // 'reasonForDelay' field: explanation if the task is delayed.
+    // Documents reasons for schedule slippage.
+    reasonForDelay: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Explanation for task delay',
+    },
+    
+    // ====================================================================================
+    // TIME TRACKING
+    // ====================================================================================
+    // 'taskHours' field: time spent on this specific task in HH:MM format.
+    // Tracks individual task time allocation.
+    taskHours: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+      validate: {
+        is: /^[0-9]{1,2}:[0-5][0-9]$/i, // Format: HH:MM or H:MM
+      },
+      comment: 'Time spent on task (HH:MM format)',
     },
     // 'taskDetails' field: JSON containing task information.
     // Structure: [{projectId: "", taskName: "", hours: 0, description: ""}]

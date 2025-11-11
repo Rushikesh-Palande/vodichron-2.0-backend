@@ -30,12 +30,43 @@ export interface TimesheetAttributes {
   employeeId: string;
   requestNumber: number;
   timesheetDate: Date;
-  taskDetails: any; // JSON
+  
+  // Task Identification
+  taskId: string | null;
+  
+  // Project/Client Information
+  customer: string | null;
+  project: string | null;
+  manager: string | null;
+  
+  // Task Details
+  taskBrief: string | null;
+  taskStatus: 'Not Started' | 'In Progress' | 'Completed' | 'On Hold' | null;
+  responsible: string | null;
+  
+  // Date Tracking
+  plannedStartDate: Date | null;
+  plannedEndDate: Date | null;
+  actualStartDate: Date | null;
+  actualEndDate: Date | null;
+  
+  // Progress Tracking
+  completionPercentage: number | null;
+  remarks: string | null;
+  reasonForDelay: string | null;
+  
+  // Time Tracking
+  taskHours: string | null; // Format: HH:MM
+  taskDetails: any; // JSON (for backward compatibility)
   totalHours: number;
+  
+  // Approval Workflow
   approvalStatus: 'REQUESTED' | 'APPROVED' | 'REJECTED';
   approverId: string | null;
   approvalDate: Date | null;
   approverComments: string | null;
+  
+  // Audit Fields
   createdAt: Date;
   createdBy: string;
   updatedAt: Date | null;
@@ -45,5 +76,26 @@ export interface TimesheetAttributes {
 export interface TimesheetCreationAttributes
   extends Optional<
     TimesheetAttributes,
-    'uuid' | 'approvalStatus' | 'approverId' | 'approvalDate' | 'approverComments' | 'createdAt' | 'updatedAt'
+    | 'uuid'
+    | 'taskId'
+    | 'customer'
+    | 'project'
+    | 'manager'
+    | 'taskBrief'
+    | 'taskStatus'
+    | 'responsible'
+    | 'plannedStartDate'
+    | 'plannedEndDate'
+    | 'actualStartDate'
+    | 'actualEndDate'
+    | 'completionPercentage'
+    | 'remarks'
+    | 'reasonForDelay'
+    | 'taskHours'
+    | 'approvalStatus'
+    | 'approverId'
+    | 'approvalDate'
+    | 'approverComments'
+    | 'createdAt'
+    | 'updatedAt'
   > {}

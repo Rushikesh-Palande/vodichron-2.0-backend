@@ -42,6 +42,11 @@ import masterDataRoutes from '../modules/master-data/routes/master-data.routes';
 router.use('/api/master-data', masterDataRoutes);
 logger.debug('  📍 Mounted: /api/master-data → masterDataRoutes');
 
+// Timesheet routes
+import timesheetRoutes from '../modules/timesheet/routes/timesheet.routes';
+router.use('/api/timesheet', timesheetRoutes);
+logger.debug('  📍 Mounted: /api/timesheet → timesheetRoutes');
+
 const duration = routeTimer.end();
 const mountedRoutes = [
   { path: '/', handler: 'healthRoutes', methods: ['GET'] }
