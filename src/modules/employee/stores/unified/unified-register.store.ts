@@ -101,6 +101,8 @@ export async function unifiedRegisterEmployeeAndUser(
       department: input.department,
       currentCtc: input.currentCtc,
       skills: input.skills,
+      education: input.education || [],
+      experience: input.experience || [],
       highestEducationalQualification: input.highestEducationalQualification,
       totalWorkExperience: input.totalWorkExperience,
       linkedIn: input.linkedIn,

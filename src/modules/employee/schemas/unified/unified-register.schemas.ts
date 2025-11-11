@@ -91,6 +91,21 @@ export const unifiedRegisterSchema = z.object({
   // EDUCATION & EXPERIENCE (Tab 3)
   // ============================================================================
   
+  education: z.array(z.object({
+    institution: z.string().min(2),
+    degreeCourse: z.string().min(2),
+    startYear: z.string().regex(/^\d{4}$/),
+    endYear: z.string().regex(/^\d{4}$/),
+  })).optional().default([]),
+  
+  experience: z.array(z.object({
+    experienceStatus: z.enum(['FRESHER', 'EXPERIENCED']),
+    company: z.string().optional().nullable(),
+    position: z.string().optional().nullable(),
+    startDate: z.string().optional().nullable(),
+    endDate: z.string().optional().nullable(),
+  })).optional().default([]),
+  
   highestEducationalQualification: z.string().optional().nullable(),
   totalWorkExperience: z.string().optional().nullable(),
   

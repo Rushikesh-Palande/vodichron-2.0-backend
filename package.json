@@ -12,6 +12,7 @@
     "start:cluster": "NODE_ENV=production pm2 start pm2.config.js",
     "seed": "node dist/scripts/run-seeds.js",
     "check:seed": "node dist/scripts/check-seed.js",
+    "reset:db": "ts-node src/scripts/reset-database.ts",
     "lint": "eslint src --ext .ts --fix",
     "typecheck": "tsc --noEmit",
     "test": "jest",

@@ -15,6 +15,7 @@ import {
 } from '../schemas/message.schemas';
 import { updateOnlineStatusHandler } from './online-status.handler';
 import { logoutUserHandler } from './logout.handler';
+import { handleEmployeeFieldValidation } from '../../modules/employee/websocket/validate-field.handler';
 import { logger } from '../../utils/logger';
 
 /**
@@ -81,9 +82,14 @@ export async function validateAndProcessMessage(
 
     const validatedMessage = validationResult.data;
     
+    // Extract userId for logging (only some message types have it)
+    const userId = validatedMessage.payload && 'userId' in validatedMessage.payload 
+      ? (validatedMessage.payload as any).userId 
+      : undefined;
+    
     logger.debug('✅ WebSocket message validated', {
       messageType: validatedMessage.messageType,
-      userId: validatedMessage.payload?.userId
+      userId
     });
 
     // Route message to appropriate handler
@@ -103,6 +109,11 @@ export async function validateAndProcessMessage(
           validatedMessage.payload
         );
         break;
+      
+      case WebSocketMessageType.VALIDATE_UNIQUE_FIELD:
+        // Handle employee field validation (no response needed, handler sends directly)
+        await handleEmployeeFieldValidation(client, validatedMessage);
+        return; // Handler sends response directly, don't send again
         
       case WebSocketMessageType.PING:
         logger.debug('🏓 PING received');

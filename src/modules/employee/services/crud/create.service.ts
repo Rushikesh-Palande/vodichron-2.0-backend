@@ -21,6 +21,8 @@ import { CreateEmployeeInput } from '../../schemas/crud/create.schemas';
 import { ApplicationUserRole } from '../../types/employee.types';
 import { encryptEmployeeSensitiveFields } from '../../helpers/encrypt-employee-sensitive-fields.helper';
 import { allocateEmployeeLeaves } from '../../../employee-leaves/services/leave-calculation.service';
+import { insertEmployeeEducation } from '../../stores/crud/employee-education.store';
+import { insertEmployeeExperience } from '../../stores/crud/employee-experience.store';
 
 /**
  * User Context Interface
@@ -177,6 +179,68 @@ export async function createEmployee(
       employeeUuid,
       employeeId: employeeData.employeeId
     });
+
+    // ==========================================================================
+    // STEP 5.5: Insert Education Records
+    // ==========================================================================
+    try {
+      if (employeeData.education && employeeData.education.length > 0) {
+        logger.info('🎓 Inserting education records', {
+          employeeUuid,
+          recordCount: employeeData.education.length
+        });
+
+        await insertEmployeeEducation(employeeUuid, employeeData.education, user.uuid);
+
+        logger.info('✅ Education records inserted', {
+          employeeUuid,
+          recordCount: employeeData.education.length
+        });
+      }
+    } catch (educationError: any) {
+      logger.error('❌ Failed to insert education records - Rolling back', {
+        employeeUuid,
+        error: educationError.message
+      });
+
+      await deleteEmployeeById(employeeUuid);
+
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to save education records. Please try again.'
+      });
+    }
+
+    // ==========================================================================
+    // STEP 5.6: Insert Experience Records
+    // ==========================================================================
+    try {
+      if (employeeData.experience && employeeData.experience.length > 0) {
+        logger.info('💼 Inserting experience records', {
+          employeeUuid,
+          recordCount: employeeData.experience.length
+        });
+
+        await insertEmployeeExperience(employeeUuid, employeeData.experience, user.uuid);
+
+        logger.info('✅ Experience records inserted', {
+          employeeUuid,
+          recordCount: employeeData.experience.length
+        });
+      }
+    } catch (experienceError: any) {
+      logger.error('❌ Failed to insert experience records - Rolling back', {
+        employeeUuid,
+        error: experienceError.message
+      });
+
+      await deleteEmployeeById(employeeUuid);
+
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to save experience records. Please try again.'
+      });
+    }
 
     // ==========================================================================
     // STEP 6: Allocate Employee Leaves

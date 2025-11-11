@@ -31,8 +31,10 @@ import MasterData from './master-data.model';
 import SurveyConfig from './survey-config.model';
 import SurveyResult from './survey-result.model';
 import Session from './session.model';
+import EmployeeEducationModel from '../modules/employee/models/employee-education.model';
+import EmployeeExperienceModel from '../modules/employee/models/employee-experience.model';
 
-logger.debug('✅ All 20 models imported successfully');
+logger.debug('✅ All 22 models imported successfully');
 
 /**
  * Define Model Associations
@@ -51,6 +53,8 @@ logger.debug('✅ All 20 models imported successfully');
  * - Employee has many Preferences
  * - Employee has many Survey Results
  * - Employee has many Resource Allocations
+ * - Employee has many Education Records
+ * - Employee has many Experience Records
  * 
  * Customer Relationships:
  * - Customer has many Projects (through Resource Allocation)
@@ -264,15 +268,41 @@ SurveyResult.belongsTo(SurveyConfig, {
 associationCount += 2;
 logger.debug('  ↔️ SurveyConfig → SurveyResult (one-to-many)');
 
+// Employee - Education Relationship (one-to-many)
+Employee.hasMany(EmployeeEducationModel, {
+  foreignKey: 'employeeId',
+  as: 'education',
+});
+
+EmployeeEducationModel.belongsTo(Employee, {
+  foreignKey: 'employeeId',
+  as: 'employee',
+});
+associationCount += 2;
+logger.debug('  ↔️ Employee → EmployeeEducation (one-to-many)');
+
+// Employee - Experience Relationship (one-to-many)
+Employee.hasMany(EmployeeExperienceModel, {
+  foreignKey: 'employeeId',
+  as: 'experience',
+});
+
+EmployeeExperienceModel.belongsTo(Employee, {
+  foreignKey: 'employeeId',
+  as: 'employee',
+});
+associationCount += 2;
+logger.debug('  ↔️ Employee → EmployeeExperience (one-to-many)');
+
 const associationDuration = associationTimer.end({ associationCount });
 logger.info(`✅ Model associations established successfully (${associationCount} associations, ${associationDuration}ms)`);
 
 const totalDuration = modelLoadTimer.end({ 
-  models: 20, 
+  models: 22, 
   associations: associationCount 
 });
 logger.info('🎉 Models module initialized successfully', {
-  totalModels: 20, 
+  totalModels: 22, 
   totalAssociations: associationCount,
   loadTime: `${totalDuration}ms`,
   models: [
@@ -280,7 +310,8 @@ logger.info('🎉 Models module initialized successfully', {
     'WeeklyTimesheet', 'EmployeeDocument', 'EmployeeActivity',
     'OnlineStatus', 'PasswordReset', 'Holiday', 'Customer',
     'Project', 'ResourceAllocation', 'CustomerAccess',
-    'EmployeePreference', 'MasterData', 'SurveyConfig', 'SurveyResult', 'Session'
+    'EmployeePreference', 'MasterData', 'SurveyConfig', 'SurveyResult', 'Session',
+    'EmployeeEducation', 'EmployeeExperience'
   ]
 });
 
@@ -306,6 +337,8 @@ export {
   SurveyConfig,
   SurveyResult,
   Session,
+  EmployeeEducationModel,
+  EmployeeExperienceModel,
 };
 
 // Export default object with all models for convenience
@@ -330,4 +363,6 @@ export default {
   SurveyConfig,
   SurveyResult,
   Session,
+  EmployeeEducation: EmployeeEducationModel,
+  EmployeeExperience: EmployeeExperienceModel,
 };

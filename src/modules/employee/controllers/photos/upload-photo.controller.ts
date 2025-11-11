@@ -65,17 +65,20 @@ export async function uploadPhotoExpressController(req: Request, res: Response) 
     });
 
     // ==========================================================================
-    // STEP 2: Validate File Exists
+    // STEP 2: Validate File Exists (Optional)
     // ==========================================================================
-    // Matches old code lines 418-419
+    // Profile photo is optional - return success if no file provided
     if (!req.file || Object.keys(req.file).length === 0) {
-      logger.warn('⛔ No file uploaded', {
+      logger.info('ℹ️  No photo file provided - skipping upload', {
         userId: req.body.userId
       });
 
-      return res.status(400).json({
-        success: false,
-        message: 'No files were uploaded.',
+      return res.status(200).json({
+        success: true,
+        message: 'No photo provided - upload skipped',
+        data: {
+          fileName: null,
+        },
         timestamp: new Date().toISOString()
       });
     }

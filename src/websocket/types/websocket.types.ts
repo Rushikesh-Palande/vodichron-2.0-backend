@@ -26,6 +26,7 @@ export enum OnlineStatus {
 export enum WebSocketMessageType {
   ONLINE_STATUS_UPDATE = 'online_status_update',
   CLOSE_CONNECTION = 'close_connection',
+  VALIDATE_UNIQUE_FIELD = 'validate_unique_field',
   PING = 'ping',
   PONG = 'pong',
 }
@@ -58,6 +59,31 @@ export interface OnlineStatusUpdatePayload {
 export interface CloseConnectionPayload {
   userId: string;
   userRole: ApplicationUserRole;
+}
+
+/**
+ * Validate Unique Field Payload
+ * ==============================
+ * Payload for real-time field uniqueness validation
+ */
+export interface ValidateUniqueFieldPayload {
+  field: 'personalEmailId' | 'officialEmailId' | 'employeeId';
+  value: string;
+  requestId: string; // Client-generated ID to match request/response
+}
+
+/**
+ * Validation Result Payload
+ * =========================
+ * Response payload for validation requests
+ */
+export interface ValidationResultPayload {
+  field: string;
+  value: string;
+  isUnique: boolean;
+  exists: boolean;
+  requestId: string;
+  message?: string;
 }
 
 /**

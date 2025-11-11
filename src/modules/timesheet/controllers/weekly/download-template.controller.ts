@@ -8,6 +8,7 @@
 import { Request, Response } from 'express';
 import { logger } from '../../../../utils/logger';
 import { generateWeeklyTimesheetTemplate } from '../../services/weekly/generate-template.service';
+import { getEmployeeIdFromUser } from '../../helpers/get-employee-id-from-user';
 
 /**
  * Download Weekly Timesheet Template - Express Controller
@@ -50,8 +51,29 @@ export async function downloadWeeklyTimesheetTemplateController(
       return;
     }
 
-    // Use employeeId from params or default to authenticated user's UUID
-    const employeeId = req.params.employeeId || user.uuid;
+    // Get employeeId from params or fetch from authenticated user
+    let employeeId: string | undefined = req.params.employeeId;
+    
+    if (!employeeId) {
+      // Fetch employeeId from users table using JWT user UUID
+      const fetchedEmployeeId = await getEmployeeIdFromUser(user.uuid);
+      
+      if (!fetchedEmployeeId) {
+        logger.error('❌ Employee not found for authenticated user', {
+          userId: user.uuid,
+          userRole: user.role
+        });
+        
+        res.status(404).json({
+          success: false,
+          message: 'Employee record not found for this user.',
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+      
+      employeeId = fetchedEmployeeId;
+    }
 
     logger.info('📥 Weekly timesheet template download request received', {
       userId: user.uuid,
@@ -63,7 +85,13 @@ export async function downloadWeeklyTimesheetTemplateController(
     // Authorization check: users can only download their own template
     // unless they are admin/HR
     const isAdmin = ['super_user', 'admin', 'hr'].includes(user.role);
-    const isOwnTemplate = user.uuid === employeeId;
+    
+    // For non-admin users, verify this employeeId belongs to the authenticated user
+    let isOwnTemplate = false;
+    if (!isAdmin) {
+      const userEmployeeId = await getEmployeeIdFromUser(user.uuid);
+      isOwnTemplate = userEmployeeId === employeeId;
+    }
 
     if (!isAdmin && !isOwnTemplate) {
       logger.warn('🚫 Access denied - User cannot download template for another employee', {

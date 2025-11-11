@@ -101,8 +101,18 @@ export async function generateWeeklyTimesheetTemplate(
     });
 
     // ==========================================================================
-    // STEP 3: Pre-fill Sr. No and TASK ID Columns
+    // STEP 3: Clear existing data and Pre-fill Sr. No and TASK ID Columns
     // ==========================================================================
+    logger.debug('🧹 Clearing existing task IDs from base template');
+    
+    // First, clear any existing data in Sr. No and Task ID columns (rows 2-100)
+    for (let row = TEMPLATE_CONFIG.dataStartRow; row <= 100; row++) {
+      const srNoCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.srNo}${row}`);
+      const taskIdCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.taskId}${row}`);
+      srNoCell.value = null;
+      taskIdCell.value = null;
+    }
+    
     logger.debug('✏️ Pre-filling Sr. No and TASK ID columns', {
       startRow: TEMPLATE_CONFIG.dataStartRow,
       numberOfRows: TEMPLATE_CONFIG.numberOfRows,

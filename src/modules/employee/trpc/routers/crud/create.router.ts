@@ -39,6 +39,8 @@ export const createEmployeeProcedure = protectedProcedure
       userId: ctx.user.uuid,
       userRole: ctx.user.role,
       employeeId: input.employeeId,
+      hasEducation: input.education?.length || 0,
+      hasExperience: input.experience?.length || 0,
       operation: 'createEmployee_trpc'
     });
 

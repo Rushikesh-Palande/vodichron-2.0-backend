@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { TASK_STATUS, TIME_FORMATS } from '../../constants/timesheet.constants';
+import { dateTransformSchema } from '../../helpers/transform-date-to-yyyy-mm-dd';
 
 /**
  * Daily Timesheet Schemas
@@ -33,22 +34,10 @@ export const dailyTaskDetailSchema = z.object({
     TASK_STATUS.ON_HOLD,
   ] as const).nullable().optional(),
   responsible: z.string().max(100, 'Responsible person name must be at most 100 characters').nullable().optional(),
-  plannedStartDate: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Planned start date must be in YYYY-MM-DD format')
-    .nullable()
-    .optional(),
-  plannedEndDate: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Planned end date must be in YYYY-MM-DD format')
-    .nullable()
-    .optional(),
-  actualStartDate: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Actual start date must be in YYYY-MM-DD format')
-    .nullable()
-    .optional(),
-  actualEndDate: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Actual end date must be in YYYY-MM-DD format')
-    .nullable()
-    .optional(),
+  plannedStartDate: dateTransformSchema.nullable().optional(),
+  plannedEndDate: dateTransformSchema.nullable().optional(),
+  actualStartDate: dateTransformSchema.nullable().optional(),
+  actualEndDate: dateTransformSchema.nullable().optional(),
   completionPercentage: z.number()
     .min(0, 'Completion percentage cannot be negative')
     .max(100, 'Completion percentage cannot exceed 100')
@@ -108,25 +97,13 @@ export const createDailyTimesheetSchema = z.object({
   
   responsible: z.string().max(100, 'Responsible person name must be at most 100 characters').nullable().optional(),
   
-  plannedStartDate: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Planned start date must be in YYYY-MM-DD format')
-    .nullable()
-    .optional(),
+  plannedStartDate: dateTransformSchema.nullable().optional(),
   
-  plannedEndDate: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Planned end date must be in YYYY-MM-DD format')
-    .nullable()
-    .optional(),
+  plannedEndDate: dateTransformSchema.nullable().optional(),
   
-  actualStartDate: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Actual start date must be in YYYY-MM-DD format')
-    .nullable()
-    .optional(),
+  actualStartDate: dateTransformSchema.nullable().optional(),
   
-  actualEndDate: z.string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Actual end date must be in YYYY-MM-DD format')
-    .nullable()
-    .optional(),
+  actualEndDate: dateTransformSchema.nullable().optional(),
   
   completionPercentage: z.number()
     .min(0, 'Completion percentage cannot be negative')

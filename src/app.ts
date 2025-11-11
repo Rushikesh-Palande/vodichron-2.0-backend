@@ -155,7 +155,19 @@ app.use(morgan(config.logging.format, {
  * Mount all application routes
  */
 // tRPC API (mounted under /trpc)
-app.use('/trpc', createExpressMiddleware({ router: appRouter, createContext }));
+app.use('/trpc', createExpressMiddleware({ 
+  router: appRouter, 
+  createContext,
+  onError: ({ path, error }) => {
+    logger.error(`❌ tRPC Error on ${path}`, {
+      path,
+      code: error.code,
+      message: error.message,
+      cause: error.cause,
+      stack: error.stack
+    });
+  }
+}));
 logger.info('📡 tRPC mounted at /trpc');
 
 app.use('/', routes);

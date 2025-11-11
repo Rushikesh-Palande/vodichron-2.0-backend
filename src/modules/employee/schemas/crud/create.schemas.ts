@@ -100,12 +100,35 @@ export const createEmployeeSchema = z.object({
   skills: z.string().optional().nullable(),
   
   // ============================================================================
-  // EDUCATION & EXPERIENCE
+  // EDUCATION & EXPERIENCE (Legacy fields - kept for backward compatibility)
   // ============================================================================
   
   highestEducationalQualification: z.string().optional().nullable(),
   totalWorkExperience: z.string().optional().nullable(),
   linkedIn: z.string().url('Enter valid LinkedIn URL').optional().or(z.literal('')).nullable(),
+  
+  // ============================================================================
+  // EDUCATION RECORDS (New - Multiple education entries)
+  // ============================================================================
+  
+  education: z.array(z.object({
+    institution: z.string().min(2, 'Institution name must be at least 2 characters'),
+    degreeCourse: z.string().min(2, 'Degree/Course must be at least 2 characters'),
+    startYear: z.string().regex(/^\d{4}$/, 'Start year must be a 4-digit year'),
+    endYear: z.string().regex(/^\d{4}$/, 'End year must be a 4-digit year'),
+  })).optional().default([]),
+  
+  // ============================================================================
+  // EXPERIENCE RECORDS (New - Multiple experience entries)
+  // ============================================================================
+  
+  experience: z.array(z.object({
+    experienceStatus: z.enum(['FRESHER', 'EXPERIENCED']),
+    company: z.string().optional().nullable(),
+    position: z.string().optional().nullable(),
+    startDate: z.string().optional().nullable(),
+    endDate: z.string().optional().nullable(),
+  })).optional().default([]),
   
   // ============================================================================
   // FINANCIAL INFORMATION

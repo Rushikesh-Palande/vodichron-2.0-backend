@@ -74,6 +74,26 @@ export const pingMessageSchema = z.object({
 });
 
 /**
+ * Validate Unique Field Payload Schema
+ * ====================================
+ * Validates field uniqueness check message payload
+ */
+export const validateUniqueFieldPayloadSchema = z.object({
+  field: z.enum(['personalEmailId', 'officialEmailId', 'employeeId'], {
+    message: 'Field must be personalEmailId, officialEmailId, or employeeId'
+  }),
+  value: z.string().min(1, 'Value is required'),
+  requestId: z.string().min(1, 'Request ID is required'),
+});
+
+export type ValidateUniqueFieldPayloadInput = z.infer<typeof validateUniqueFieldPayloadSchema>;
+
+export const validateUniqueFieldMessageSchema = z.object({
+  messageType: z.literal(WebSocketMessageType.VALIDATE_UNIQUE_FIELD),
+  payload: validateUniqueFieldPayloadSchema,
+});
+
+/**
  * Union Schema for All Message Types
  * ==================================
  * Discriminated union for all supported message types
@@ -81,6 +101,7 @@ export const pingMessageSchema = z.object({
 export const allWebSocketMessagesSchema = z.discriminatedUnion('messageType', [
   onlineStatusUpdateMessageSchema,
   closeConnectionMessageSchema,
+  validateUniqueFieldMessageSchema,
   pingMessageSchema,
 ]);
 
