@@ -135,6 +135,8 @@ export interface CreateDailyTimesheetInput {
 export interface DailyTimesheetFilters {
   month?: string; // Format: "01" to "12"
   year?: string;  // Format: "2024"
+  startDate?: string; // Format: "YYYY-MM-DD"
+  endDate?: string;   // Format: "YYYY-MM-DD"
   approvalStatus?: TimesheetApprovalStatus;
 }
 
