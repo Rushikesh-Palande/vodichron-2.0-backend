@@ -88,7 +88,7 @@ jest.mock('../../../store/auth.store');
 
 import { router } from '../../../../../trpc/trpc';
 import { extendSessionProcedure } from '../../../trpc/routers/extend-session.router';
-import { logger, logAuth, logSecurity, logDatabase, PerformanceTimer } from '../../../../../utils/logger';
+import { logger, logAuth, logSecurity, logDatabase } from '../../../../../utils/logger';
 import { hashRefreshToken } from '../../../helpers/verify-refresh-token';
 import { generateToken } from '../../../helpers/generate-token';
 import { generateRefreshToken } from '../../../helpers/generate-refresh-token';

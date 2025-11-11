@@ -163,8 +163,8 @@ async function promptConfirmation(): Promise<boolean> {
  */
 async function main() {
   try {
-    console.log('\n🔧 Database Reset Script');
-    console.log('========================\n');
+    logger.info('\n🔧 Database Reset Script');
+    logger.info('========================\n');
     
     // Connect to database
     logger.info('🔌 Connecting to database...');
@@ -188,7 +188,7 @@ async function main() {
     logger.info('\n🚀 Starting database reset...\n');
     await truncateAllTables();
     
-    console.log('\n✨ Database reset completed successfully!\n');
+    logger.info('\n✨ Database reset completed successfully!\n');
     process.exit(0);
     
   } catch (error: any) {
