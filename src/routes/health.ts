@@ -84,7 +84,7 @@ router.get('/health', async (req: Request, res: Response) => {
     const uptimeSeconds = process.uptime();
     
     const healthData = {
-      status: dbHealthy ? 'healthyyy' : 'degraded',
+      status: dbHealthy ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
       uptime: {
         seconds: Math.floor(uptimeSeconds),
