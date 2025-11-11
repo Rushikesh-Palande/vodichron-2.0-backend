@@ -3,6 +3,7 @@ import { router } from '../../../trpc/trpc';
 // Daily Timesheet Routers
 import { createDailyTimesheetProcedure } from './routers/daily/create-daily-timesheet.router';
 import { listDailyTimesheetsProcedure } from './routers/daily/list-daily-timesheets.router';
+import { updateDailyTimesheetProcedure } from './routers/daily/update-daily-timesheet.router';
 import { updateDailyTimesheetApprovalProcedure } from './routers/daily/update-daily-timesheet-approval.router';
 
 // Weekly Timesheet Routers
@@ -30,6 +31,7 @@ import { getNextTaskIdProcedure } from './routers/get-next-task-id.router';
  * Daily Timesheet Procedures:
  * - createDailyTimesheet: Create a new daily timesheet
  * - listDailyTimesheets: List employee's daily timesheets (paginated)
+ * - updateDailyTimesheet: Update daily timesheet (same day only for employees)
  * - updateDailyTimesheetApproval: Approve/reject daily timesheet
  * 
  * Weekly Timesheet Procedures:
@@ -55,6 +57,12 @@ export const timesheetRouter = router({
    * Authorization: Employees (own), Admin/HR/Super (any)
    */
   listDailyTimesheets: listDailyTimesheetsProcedure,
+  
+  /**
+   * Update Daily Timesheet
+   * Authorization: Employees (own, same day only), Admin/HR/Super (any)
+   */
+  updateDailyTimesheet: updateDailyTimesheetProcedure,
   
   /**
    * Update Daily Timesheet Approval Status

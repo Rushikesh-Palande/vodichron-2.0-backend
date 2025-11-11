@@ -49,7 +49,16 @@ export async function getPaginatedDailyTimesheetsByEmployeeId(
     let startDate: string | undefined;
     let endDate: string | undefined;
     
-    if (filters.month && filters.year) {
+    // Priority: Direct date filters > Month/Year filters
+    if (filters.startDate && filters.endDate) {
+      // Date range provided (from frontend Day/Range filters)
+      startDate = filters.startDate;
+      endDate = filters.endDate;
+    } else if (filters.startDate) {
+      // Only start date (single day filter)
+      startDate = filters.startDate;
+      endDate = filters.startDate;
+    } else if (filters.month && filters.year) {
       // Both month and year provided
       startDate = `${filters.year}-${filters.month.padStart(2, '0')}-01`;
       endDate = moment(startDate).endOf('month').format('YYYY-MM-DD');

@@ -16,7 +16,7 @@
 import { TRPCError } from '@trpc/server';
 import moment from 'moment';
 import { logger, logSecurity, PerformanceTimer } from '../../../../utils/logger';
-import { checkDailyTimesheetOverlap, insertDailyTimesheet } from '../../stores/daily/create.store';
+import { insertDailyTimesheet } from '../../stores/daily/create.store';
 import { CreateDailyTimesheetInput } from '../../types/timesheet.types';
 import { ApplicationUserRole } from '../../types/timesheet.types';
 import { generateTaskId } from '../../helpers/generate-task-id';
@@ -122,37 +122,11 @@ export async function createDailyTimesheet(
     }
 
     // ==========================================================================
-    // STEP 3: Check for Overlapping Timesheets
+    // STEP 3: Task ID will ensure uniqueness (removed date overlap check)
     // ==========================================================================
-    logger.debug('🔍 Checking for overlapping timesheets', {
-      employeeId: timesheetData.employeeId,
-      timesheetDate: timesheetData.timesheetDate
-    });
-
-    const hasOverlap = await checkDailyTimesheetOverlap(
-      timesheetData.timesheetDate,
-      timesheetData.employeeId
-    );
-
-    if (hasOverlap) {
-      const formattedDate = timesheetDate.format('Do MMMM YYYY');
-      
-      logger.warn('⚠️ Timesheet already exists for date', {
-        employeeId: timesheetData.employeeId,
-        timesheetDate: timesheetData.timesheetDate,
-        formattedDate
-      });
-
-      logSecurity('CREATE_DAILY_TIMESHEET_DUPLICATE', 'medium', {
-        employeeId: timesheetData.employeeId,
-        timesheetDate: timesheetData.timesheetDate
-      }, undefined, user.uuid);
-
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: `Timesheet is already submitted for date, ${formattedDate}.`
-      });
-    }
+    // Note: Multiple tasks can be submitted for the same date.
+    // Each task gets a unique Task ID (TASK001, TASK002, etc.)
+    // The Task ID is what's unique, not the date.
 
     // ==========================================================================
     // STEP 4: Validate Task Details
@@ -170,60 +144,88 @@ export async function createDailyTimesheet(
     }
 
     // ==========================================================================
-    // STEP 5: Generate Task ID
+    // STEP 5: Create Separate Row for Each Task
     // ==========================================================================
-    logger.debug('🔢 Generating task ID for employee', {
-      employeeId: timesheetData.employeeId
-    });
-
-    const taskId = await generateTaskId(timesheetData.employeeId);
-
-    logger.info('✅ Task ID generated', {
-      employeeId: timesheetData.employeeId,
-      taskId
-    });
-
-    // Add task ID to timesheet data
-    const timesheetWithTaskId = {
-      ...timesheetData,
-      taskId
-    };
-
-    // ==========================================================================
-    // STEP 6: Insert Timesheet Record
-    // ==========================================================================
-    logger.info('💾 Inserting daily timesheet record', {
+    logger.info('💾 Creating separate timesheet records for each task', {
       employeeId: timesheetData.employeeId,
       timesheetDate: timesheetData.timesheetDate,
-      taskCount: timesheetData.taskDetails.length,
-      totalHours: timesheetData.totalHours,
-      taskId
+      taskCount: timesheetData.taskDetails.length
     });
 
-    const timesheetUuid = await insertDailyTimesheet(timesheetWithTaskId, user.uuid);
+    const createdTimesheets: string[] = [];
+
+    // Loop through each task and create a separate database row
+    for (const taskDetail of timesheetData.taskDetails) {
+      // Generate unique Task ID for this specific task
+      logger.debug('🔢 Generating task ID for employee', {
+        employeeId: timesheetData.employeeId
+      });
+
+      const taskId = await generateTaskId(timesheetData.employeeId);
+
+      logger.info('✅ Task ID generated', {
+        employeeId: timesheetData.employeeId,
+        taskId
+      });
+
+      // Create timesheet data for this single task
+      const singleTaskTimesheet: CreateDailyTimesheetInput = {
+        ...timesheetData,
+        taskId,
+        // Use individual task fields instead of taskDetails array
+        customer: taskDetail.customer || timesheetData.customer,
+        project: taskDetail.project || timesheetData.project,
+        manager: taskDetail.manager || timesheetData.manager,
+        taskBrief: taskDetail.taskBrief || timesheetData.taskBrief,
+        taskStatus: taskDetail.taskStatus || timesheetData.taskStatus,
+        responsible: taskDetail.responsible || timesheetData.responsible,
+        plannedStartDate: taskDetail.plannedStartDate || timesheetData.plannedStartDate,
+        plannedEndDate: taskDetail.plannedEndDate || timesheetData.plannedEndDate,
+        actualStartDate: taskDetail.actualStartDate || timesheetData.actualStartDate,
+        actualEndDate: taskDetail.actualEndDate || timesheetData.actualEndDate,
+        completionPercentage: taskDetail.completionPercentage ?? timesheetData.completionPercentage,
+        remarks: taskDetail.remarks || timesheetData.remarks,
+        reasonForDelay: taskDetail.reasonForDelay || timesheetData.reasonForDelay,
+        taskHours: taskDetail.taskHours || timesheetData.taskHours,
+        // Keep taskDetails array with single task
+        taskDetails: [taskDetail],
+        // TotalHours is not being used, set to 0
+        totalHours: 0
+      };
+
+      // Insert this task as a separate row
+      const timesheetUuid = await insertDailyTimesheet(singleTaskTimesheet, user.uuid);
+      createdTimesheets.push(timesheetUuid);
+
+      logger.info('✅ Task timesheet record created', {
+        timesheetUuid,
+        taskId,
+        employeeId: timesheetData.employeeId
+      });
+    }
 
     // ==========================================================================
-    // STEP 7: Log Success and Return
+    // STEP 6: Log Success and Return
     // ==========================================================================
     const duration = timer.end();
 
-    logger.info('✅ Daily timesheet created successfully', {
-      timesheetUuid,
+    logger.info('✅ Daily timesheets created successfully', {
+      timesheetCount: createdTimesheets.length,
+      timesheetUuids: createdTimesheets,
       employeeId: timesheetData.employeeId,
       timesheetDate: timesheetData.timesheetDate,
-      totalHours: timesheetData.totalHours,
-      taskId,
       createdBy: user.uuid,
       duration: `${duration}ms`
     });
 
     logSecurity('CREATE_DAILY_TIMESHEET_SUCCESS', 'low', {
-      timesheetUuid,
+      timesheetCount: createdTimesheets.length,
       employeeId: timesheetData.employeeId,
       duration
     }, undefined, user.uuid);
 
-    return { timesheetUuid };
+    // Return the first UUID for backward compatibility
+    return { timesheetUuid: createdTimesheets[0] };
 
   } catch (error: any) {
     // ==========================================================================

@@ -216,15 +216,23 @@ export async function insertDailyTimesheet(
     const duration = timer.end();
     logDatabase('INSERT_DAILY_TIMESHEET_ERROR', 'new_timesheet', duration, error);
     
+    // Get detailed error information
+    const originalError = error.original || error.parent || error;
+    
     logger.error('❌ Failed to insert daily timesheet', {
       employeeId: timesheetData.employeeId,
       error: error.message,
+      originalError: originalError.message || originalError,
       code: error.code,
       errno: error.errno,
       sqlState: error.sqlState,
+      sqlMessage: originalError.sqlMessage,
+      sql: originalError.sql,
       duration: `${duration}ms`
     });
 
-    throw new Error(`Database error while creating timesheet: ${error.message}`);
+    // Provide more specific error message
+    const errorMsg = originalError.sqlMessage || originalError.message || error.message;
+    throw new Error(`Database error while creating timesheet: ${errorMsg}`);
   }
 }

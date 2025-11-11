@@ -18,6 +18,8 @@ import { TIMESHEET_APPROVAL_STATUS } from '../../constants/timesheet.constants';
 export const dailyTimesheetFiltersSchema = z.object({
   month: z.string().regex(/^(0[1-9]|1[0-2])$/, 'Month must be 01-12').optional(),
   year: z.string().regex(/^\d{4}$/, 'Year must be a 4-digit number').optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Start date must be in YYYY-MM-DD format').optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'End date must be in YYYY-MM-DD format').optional(),
   approvalStatus: z.enum([
     TIMESHEET_APPROVAL_STATUS.REQUESTED,
     TIMESHEET_APPROVAL_STATUS.APPROVED,

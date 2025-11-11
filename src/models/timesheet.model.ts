@@ -356,10 +356,11 @@ Timesheet.init(
         fields: ['approvalStatus'],
         name: 'idx_timesheets_approval_status',
       },
+      // Removed unique constraint - multiple tasks can exist for the same date
+      // Each task gets a unique taskId (TASK001, TASK002, etc.)
       {
         fields: ['employeeId', 'timesheetDate'],
         name: 'idx_timesheets_employee_date',
-        unique: true,  // One timesheet per employee per date
       },
     ],
   }
