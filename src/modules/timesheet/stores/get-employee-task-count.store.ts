@@ -33,14 +33,21 @@ export async function getEmployeeTaskCount(employeeId: string): Promise<number> 
       operation: 'getEmployeeTaskCount'
     });
 
-    // Count tasks from both daily and weekly timesheets
-    // We count distinct timesheets, not individual task entries
+    // Find the highest task number from both daily and weekly timesheets
+    // Extract number from taskId column (e.g., "TASK096" -> 96) for this specific employee
     const sql = `
       SELECT 
-        COALESCE(
-          (SELECT COUNT(*) FROM employee_timesheets WHERE employeeId = ?), 0
-        ) + COALESCE(
-          (SELECT COUNT(*) FROM employee_weekly_timesheets WHERE employeeId = ?), 0
+        GREATEST(
+          COALESCE(
+            (SELECT MAX(CAST(SUBSTRING(taskId, 5) AS UNSIGNED)) 
+             FROM employee_timesheets 
+             WHERE employeeId = ? AND taskId IS NOT NULL AND taskId LIKE 'TASK%'), 0
+          ),
+          COALESCE(
+            (SELECT MAX(CAST(SUBSTRING(taskId, 5) AS UNSIGNED)) 
+             FROM employee_weekly_timesheets 
+             WHERE employeeId = ? AND taskId IS NOT NULL AND taskId LIKE 'TASK%'), 0
+          )
         ) as totalTaskCount
     `;
     

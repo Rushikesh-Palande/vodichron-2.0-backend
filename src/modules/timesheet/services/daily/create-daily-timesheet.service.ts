@@ -179,6 +179,7 @@ export async function createDailyTimesheet(
         taskBrief: taskDetail.taskBrief || timesheetData.taskBrief,
         taskStatus: taskDetail.taskStatus || timesheetData.taskStatus,
         responsible: taskDetail.responsible || timesheetData.responsible,
+        taskDate: timesheetData.taskDate || timesheetData.timesheetDate, // Use taskDate if provided, otherwise use timesheetDate
         plannedStartDate: taskDetail.plannedStartDate || timesheetData.plannedStartDate,
         plannedEndDate: taskDetail.plannedEndDate || timesheetData.plannedEndDate,
         actualStartDate: taskDetail.actualStartDate || timesheetData.actualStartDate,

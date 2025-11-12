@@ -34,6 +34,9 @@ export const dailyTaskDetailSchema = z.object({
     TASK_STATUS.ON_HOLD,
   ] as const).nullable().optional(),
   responsible: z.string().max(100, 'Responsible person name must be at most 100 characters').nullable().optional(),
+  
+  taskDate: dateTransformSchema.nullable().optional(),
+  
   plannedStartDate: dateTransformSchema.nullable().optional(),
   plannedEndDate: dateTransformSchema.nullable().optional(),
   actualStartDate: dateTransformSchema.nullable().optional(),

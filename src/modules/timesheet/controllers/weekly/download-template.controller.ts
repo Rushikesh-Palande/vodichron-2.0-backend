@@ -108,8 +108,19 @@ export async function downloadWeeklyTimesheetTemplateController(
       return;
     }
 
+    // Get mode and selectedDate from query parameters
+    const mode = (req.query.mode as 'daily' | 'weekly') || 'daily';
+    const selectedDateStr = req.query.selectedDate as string | undefined;
+    const selectedDate = selectedDateStr ? new Date(selectedDateStr) : undefined;
+    
+    logger.debug('📅 Template generation parameters', {
+      mode,
+      selectedDate: selectedDate?.toISOString(),
+      employeeId
+    });
+    
     // Generate personalized template
-    const buffer = await generateWeeklyTimesheetTemplate(employeeId);
+    const buffer = await generateWeeklyTimesheetTemplate(employeeId, mode, selectedDate);
 
     // Set response headers for file download
     const filename = `Weekly_Timesheet_Template_${new Date().toISOString().split('T')[0]}.xlsx`;

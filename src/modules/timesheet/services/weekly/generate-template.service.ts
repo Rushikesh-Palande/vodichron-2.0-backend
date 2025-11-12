@@ -23,13 +23,14 @@ const TEMPLATE_CONFIG = {
   // Column letters in Excel (A, B, C, etc.)
   columns: {
     srNo: 'A',      // Sr. No column
-    taskId: 'B',    // TASK ID column
+    date: 'B',      // Date column (NEW) - template has Date in column B
+    taskId: 'C',    // TASK ID column - template has Task_ID in column C
   },
   
   // Starting row for data (usually row 2 if row 1 has headers)
   dataStartRow: 2,
   
-  // Number of pre-filled rows to generate
+  // Number of pre-filled rows to generate (per day in weekly mode)
   numberOfRows: 3,
 };
 
@@ -51,7 +52,9 @@ const TEMPLATE_CONFIG = {
  * // ... and so on
  */
 export async function generateWeeklyTimesheetTemplate(
-  employeeId: string
+  employeeId: string,
+  mode: 'daily' | 'weekly' = 'daily',
+  selectedDate?: Date
 ): Promise<Buffer> {
   const timer = new PerformanceTimer('generateWeeklyTimesheetTemplate');
   
@@ -101,37 +104,81 @@ export async function generateWeeklyTimesheetTemplate(
     });
 
     // ==========================================================================
-    // STEP 3: Clear existing data and Pre-fill Sr. No and TASK ID Columns
+    // STEP 3: Clear existing data and Pre-fill Sr. No, TASK ID, and Date Columns
     // ==========================================================================
-    logger.debug('🧹 Clearing existing task IDs from base template');
+    logger.debug('🧹 Clearing existing data from base template');
     
-    // First, clear any existing data in Sr. No and Task ID columns (rows 2-100)
+    // First, clear any existing data in Sr. No, Task ID, and Date columns (rows 2-100)
     for (let row = TEMPLATE_CONFIG.dataStartRow; row <= 100; row++) {
       const srNoCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.srNo}${row}`);
       const taskIdCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.taskId}${row}`);
+      const dateCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.date}${row}`);
       srNoCell.value = null;
       taskIdCell.value = null;
+      dateCell.value = null;
     }
     
-    logger.debug('✏️ Pre-filling Sr. No and TASK ID columns', {
+    // ==========================================================================
+    // STEP 4: Determine dates based on mode
+    // ==========================================================================
+    const dates: Date[] = [];
+    const baseDate = selectedDate || new Date();
+    
+    if (mode === 'daily') {
+      // Daily mode: only today's date
+      dates.push(baseDate);
+    } else {
+      // Weekly mode: all 7 days (Monday to Sunday)
+      const day = baseDate.getDay();
+      const monday = new Date(baseDate);
+      monday.setDate(baseDate.getDate() - day + (day === 0 ? -6 : 1));
+      
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+        dates.push(date);
+      }
+    }
+    
+    logger.debug('✏️ Pre-filling Sr. No, TASK ID, and Date columns', {
+      mode,
       startRow: TEMPLATE_CONFIG.dataStartRow,
       numberOfRows: TEMPLATE_CONFIG.numberOfRows,
-      startingTaskNumber: nextTaskNumber
+      startingTaskNumber: nextTaskNumber,
+      daysCount: dates.length
     });
 
-    for (let i = 0; i < TEMPLATE_CONFIG.numberOfRows; i++) {
-      const rowNumber = TEMPLATE_CONFIG.dataStartRow + i;
-      const srNo = i + 1;
-      const taskNumber = nextTaskNumber + i;
-      const taskId = formatTaskNumber(taskNumber);
+    let currentRow = TEMPLATE_CONFIG.dataStartRow;
+    let taskNumber = nextTaskNumber;
+    let srNo = 1;
+    
+    // For each date, generate rows
+    for (const date of dates) {
+      for (let i = 0; i < TEMPLATE_CONFIG.numberOfRows; i++) {
+        const taskId = formatTaskNumber(taskNumber);
+        
+        // Format date as DD-MM-YYYY to match excel-parser.ts formatDateToIndian format
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const dateStr = `${day}-${month}-${year}`;
 
-      // Set Sr. No (Column A)
-      const srNoCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.srNo}${rowNumber}`);
-      srNoCell.value = srNo;
+        // Set Sr. No (Column A)
+        const srNoCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.srNo}${currentRow}`);
+        srNoCell.value = srNo;
 
-      // Set TASK ID (Column B)
-      const taskIdCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.taskId}${rowNumber}`);
-      taskIdCell.value = taskId;
+        // Set Date (Column B)
+        const dateCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.date}${currentRow}`);
+        dateCell.value = dateStr;
+        
+        // Set TASK ID (Column C)
+        const taskIdCell = worksheet.getCell(`${TEMPLATE_CONFIG.columns.taskId}${currentRow}`);
+        taskIdCell.value = taskId;
+
+        currentRow++;
+        taskNumber++;
+        srNo++;
+      }
     }
 
     logger.info('✅ Columns pre-filled successfully', {

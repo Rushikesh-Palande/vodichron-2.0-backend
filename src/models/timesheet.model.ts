@@ -52,6 +52,7 @@ class Timesheet extends Model<TimesheetAttributes, TimesheetCreationAttributes> 
   public responsible!: string | null;                       // Person responsible.
   
   // Date Tracking
+  public taskDate!: Date | null;                            // Actual date when work was performed (for weekly timesheets).
   public plannedStartDate!: Date | null;                    // Planned start date.
   public plannedEndDate!: Date | null;                      // Planned end date.
   public actualStartDate!: Date | null;                     // Actual start date.
@@ -184,6 +185,14 @@ Timesheet.init(
     // ====================================================================================
     // DATE TRACKING
     // ====================================================================================
+    // 'taskDate' field: actual date when the work was performed.
+    // Different from 'timesheetDate' (submission date). Used in weekly timesheets
+    // to track which day of the week the task was completed.
+    taskDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      comment: 'Actual date when work was performed',
+    },
     // 'plannedStartDate' field: originally planned start date for the task.
     // Used for project planning and deadline tracking.
     plannedStartDate: {

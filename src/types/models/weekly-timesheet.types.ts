@@ -41,6 +41,7 @@ export interface WeeklyTimesheetAttributes {
   responsible: string | null;
   
   // Date Tracking
+  taskDate: Date | null; // Actual date when work was performed
   plannedStartDate: Date | null;
   plannedEndDate: Date | null;
   actualStartDate: Date | null;
@@ -82,6 +83,7 @@ export interface WeeklyTimesheetCreationAttributes
     | 'taskBrief'
     | 'taskStatus'
     | 'responsible'
+    | 'taskDate'
     | 'plannedStartDate'
     | 'plannedEndDate'
     | 'actualStartDate'

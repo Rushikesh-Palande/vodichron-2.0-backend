@@ -61,6 +61,7 @@ export interface DailyTaskDetail {
   taskBrief?: string | null;
   taskStatus?: TaskStatus | null;
   responsible?: string | null;
+  taskDate?: string | null; // Actual date when work was performed
   plannedStartDate?: string | null;
   plannedEndDate?: string | null;
   actualStartDate?: string | null;
@@ -117,6 +118,7 @@ export interface CreateDailyTimesheetInput {
   taskBrief?: string | null;
   taskStatus?: TaskStatus | null;
   responsible?: string | null;
+  taskDate?: string | null; // Actual date when work was performed
   plannedStartDate?: string | null;
   plannedEndDate?: string | null;
   actualStartDate?: string | null;

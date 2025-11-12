@@ -125,6 +125,7 @@ export async function insertDailyTimesheet(
         taskBrief,
         taskStatus,
         responsible,
+        taskDate,
         plannedStartDate,
         plannedEndDate,
         actualStartDate,
@@ -150,6 +151,7 @@ export async function insertDailyTimesheet(
         :taskBrief,
         :taskStatus,
         :responsible,
+        :taskDate,
         :plannedStartDate,
         :plannedEndDate,
         :actualStartDate,
@@ -180,6 +182,7 @@ export async function insertDailyTimesheet(
         taskBrief: timesheetData.taskBrief || null,
         taskStatus: timesheetData.taskStatus || null,
         responsible: timesheetData.responsible || null,
+        taskDate: timesheetData.taskDate ? moment(timesheetData.taskDate).format('YYYY-MM-DD') : formattedDate, // Default to timesheetDate if not provided
         plannedStartDate: timesheetData.plannedStartDate ? moment(timesheetData.plannedStartDate).format('YYYY-MM-DD') : null,
         plannedEndDate: timesheetData.plannedEndDate ? moment(timesheetData.plannedEndDate).format('YYYY-MM-DD') : null,
         actualStartDate: timesheetData.actualStartDate ? moment(timesheetData.actualStartDate).format('YYYY-MM-DD') : null,

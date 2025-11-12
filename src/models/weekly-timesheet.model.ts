@@ -51,6 +51,7 @@ class WeeklyTimesheet extends Model<WeeklyTimesheetAttributes, WeeklyTimesheetCr
   public taskBrief!: string | null;                                 // Task description.
   public taskStatus!: 'Not Started' | 'In Progress' | 'Completed' | 'On Hold' | null; // Task status.
   public responsible!: string | null;                               // Person responsible for the task.
+  public taskDate!: Date | null;                                    // Actual date when work was performed.
   public plannedStartDate!: Date | null;                            // Planned start date.
   public plannedEndDate!: Date | null;                              // Planned end date.
   public actualStartDate!: Date | null;                             // Actual start date.
@@ -182,6 +183,13 @@ WeeklyTimesheet.init(
     // ====================================================================================
     // DATE TRACKING
     // ====================================================================================
+    // 'taskDate' field: actual date when the work was performed.
+    // Used to track which specific day of the week the task was completed.
+    taskDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      comment: 'Actual date when work was performed',
+    },
     // 'plannedStartDate' field: originally planned start date for the task.
     // Used for project planning and deadline tracking.
     plannedStartDate: {
