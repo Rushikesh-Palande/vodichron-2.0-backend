@@ -51,7 +51,7 @@ export const createWeeklyTimesheetSchema = z.object({
   // REQUIRED FIELDS
   // ============================================================================
   
-  employeeId: z.string().uuid('Invalid employee ID'),
+  employeeId: z.string().min(1, 'Employee ID is required'), // Accept both UUID and human-readable IDs
   
   weekStartDate: z.string().min(1, 'Week start date is required')
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Week start date must be in YYYY-MM-DD format'),

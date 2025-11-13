@@ -45,6 +45,7 @@ export async function handleGetUserProfile(req: Request, res: Response) {
     let employeeName = null;
     let recentPhotograph = null;
     let employeeUuid = null;
+    let employeeId = null;
     if (user.type === 'employee') {
       // user.uuid is from application_users table, need to get employeeId first
       const appUser = await User.findOne({ where: { uuid: user.uuid } });
@@ -55,6 +56,7 @@ export async function handleGetUserProfile(req: Request, res: Response) {
         if (employee) {
           employeeName = employee.name;
           recentPhotograph = employee.recentPhotograph;
+          employeeId = employee.employeeId; // Human-readable ID like '0000001' or 'EMP1'
         }
       }
     }
@@ -74,13 +76,14 @@ export async function handleGetUserProfile(req: Request, res: Response) {
       duration
     }, undefined, user.uuid);
 
-    // Return user data with employee name, photo, and employee UUID
+    // Return user data with employee name, photo, employee UUID, and employeeId
     return res.status(200).json({
       data: {
         ...user,
         name: employeeName,
         recentPhotograph,
-        employeeUuid
+        employeeUuid,
+        employeeId // Human-readable ID like '0000001' or 'EMP1'
       }
     });
 

@@ -3,8 +3,10 @@ import { router } from '../../../trpc/trpc';
 // Daily Timesheet Routers
 import { createDailyTimesheetProcedure } from './routers/daily/create-daily-timesheet.router';
 import { listDailyTimesheetsProcedure } from './routers/daily/list-daily-timesheets.router';
+import { listReporteeDailyTimesheetsProcedure } from './routers/daily/list-reportee-daily-timesheets.router';
 import { updateDailyTimesheetProcedure } from './routers/daily/update-daily-timesheet.router';
 import { updateDailyTimesheetApprovalProcedure } from './routers/daily/update-daily-timesheet-approval.router';
+import { bulkApproveDailyTimesheetsProcedure } from './routers/daily/bulk-approve-daily-timesheets.router';
 
 // Weekly Timesheet Routers
 import { createWeeklyTimesheetProcedure } from './routers/weekly/create-weekly-timesheet.router';
@@ -31,6 +33,7 @@ import { getNextTaskIdProcedure } from './routers/get-next-task-id.router';
  * Daily Timesheet Procedures:
  * - createDailyTimesheet: Create a new daily timesheet
  * - listDailyTimesheets: List employee's daily timesheets (paginated)
+ * - listReporteeDailyTimesheets: List reportee daily timesheets (managers/HR only)
  * - updateDailyTimesheet: Update daily timesheet (same day only for employees)
  * - updateDailyTimesheetApproval: Approve/reject daily timesheet
  * 
@@ -59,6 +62,12 @@ export const timesheetRouter = router({
   listDailyTimesheets: listDailyTimesheetsProcedure,
   
   /**
+   * List Reportee Daily Timesheets
+   * Authorization: HR/Super (all), Manager/Director (reportees only)
+   */
+  listReporteeDailyTimesheets: listReporteeDailyTimesheetsProcedure,
+  
+  /**
    * Update Daily Timesheet
    * Authorization: Employees (own, same day only), Admin/HR/Super (any)
    */
@@ -69,6 +78,13 @@ export const timesheetRouter = router({
    * Authorization: Admin/HR/Super/Manager/Director/Customer
    */
   updateDailyTimesheetApproval: updateDailyTimesheetApprovalProcedure,
+  
+  /**
+   * Bulk Approve Daily Timesheets
+   * Authorization: Admin/HR/Super/Manager/Director/Customer
+   * Approves/rejects multiple timesheets and sends ONE email
+   */
+  bulkApproveDailyTimesheets: bulkApproveDailyTimesheetsProcedure,
 
   // ============================================================================
   // WEEKLY TIMESHEET OPERATIONS

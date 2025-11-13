@@ -64,6 +64,7 @@ export interface TimesheetAttributes {
   // Approval Workflow
   approvalStatus: 'REQUESTED' | 'APPROVED' | 'REJECTED';
   approverId: string | null;
+  approverRole: string | null;
   approvalDate: Date | null;
   approverComments: string | null;
   
@@ -96,6 +97,7 @@ export interface TimesheetCreationAttributes
     | 'taskHours'
     | 'approvalStatus'
     | 'approverId'
+    | 'approverRole'
     | 'approvalDate'
     | 'approverComments'
     | 'createdAt'

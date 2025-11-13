@@ -5,6 +5,7 @@ import { authenticateJWT } from '../../../middleware/auth.middleware';
 // Daily Timesheet Controllers
 import { createDailyTimesheetExpressController } from '../controllers/daily/create-daily-timesheet.controller';
 import { listDailyTimesheetsExpressController } from '../controllers/daily/list-daily-timesheets.controller';
+import { listReporteeDailyTimesheetsExpressController } from '../controllers/daily/list-reportee-daily-timesheets.controller';
 import { updateDailyTimesheetApprovalExpressController } from '../controllers/daily/update-daily-timesheet-approval.controller';
 
 // Weekly Timesheet Controllers
@@ -67,6 +68,7 @@ router.get('/status', (_req, res) => {
       endpoints: {
         createDailyTimesheet: '/api/timesheet/daily/create',
         listDailyTimesheets: '/api/timesheet/daily/:employeeId',
+        listReporteeDailyTimesheets: '/api/timesheet/daily/reportee',
         updateDailyTimesheetApproval: '/api/timesheet/daily/:timesheetUuid/approval',
         createWeeklyTimesheet: '/api/timesheet/weekly/create',
         listWeeklyTimesheets: '/api/timesheet/weekly/:employeeId',
@@ -183,6 +185,48 @@ logger.info('✅ Timesheet route registered: POST /timesheet/daily/create');
  */
 router.post('/daily/:employeeId', authenticateJWT, listDailyTimesheetsExpressController);
 logger.info('✅ Timesheet route registered: POST /timesheet/daily/:employeeId');
+
+/**
+ * @route   POST /api/timesheet/daily/reportee
+ * @desc    Get daily timesheets of all reportees (for managers/HR)
+ * @access  Protected (JWT required)
+ * @auth    EMP_MANAGERS, ADMIN_USERS - Managers and HR can view reportee daily timesheets
+ * 
+ * @param   {object} req.body.pagination - Pagination options
+ * @param   {number} [req.body.pagination.page=0] - Page number
+ * @param   {number} [req.body.pagination.pageLimit=20] - Items per page
+ * @param   {object} [req.body.filters] - Optional filters
+ * @param   {string} [req.body.filters.month] - Month filter (01-12)
+ * @param   {string} [req.body.filters.year] - Year filter (YYYY)
+ * @param   {string} [req.body.filters.startDate] - Start date filter (YYYY-MM-DD)
+ * @param   {string} [req.body.filters.endDate] - End date filter (YYYY-MM-DD)
+ * @param   {string} [req.body.filters.approvalStatus] - Status filter
+ * 
+ * @returns {array} Array of reportee daily timesheets
+ * 
+ * @throws  {401} Unauthorized - User not authenticated
+ * @throws  {403} Forbidden - User is not a manager or admin
+ * @throws  {500} Internal Server Error - Unexpected error
+ * 
+ * @example
+ * POST /api/timesheet/daily/reportee
+ * Authorization: Bearer <token>
+ * 
+ * Body:
+ * {
+ *   "pagination": { "page": 0, "pageLimit": 20 },
+ *   "filters": { "approvalStatus": "REQUESTED" }
+ * }
+ * 
+ * Response:
+ * {
+ *   "success": true,
+ *   "message": "Reportee daily timesheets fetched successfully",
+ *   "data": [...]
+ * }
+ */
+router.post('/daily/reportee', authenticateJWT, listReporteeDailyTimesheetsExpressController);
+logger.info('✅ Timesheet route registered: POST /timesheet/daily/reportee');
 
 /**
  * @route   PATCH /api/timesheet/daily/:timesheetUuid/approval
@@ -481,6 +525,6 @@ logger.info('✅ Timesheet route registered: POST /timesheet/weekly/reportee');
 router.patch('/weekly/:timesheetId/approve', authenticateJWT, approveWeeklyTimesheetExpressController);
 logger.info('✅ Timesheet route registered: PATCH /timesheet/weekly/:timesheetId/approve');
 
-logger.info('✅ Timesheet routes initialized successfully (11 routes: 1 status + 3 daily + 7 weekly)');
+logger.info('✅ Timesheet routes initialized successfully (12 routes: 1 status + 4 daily + 7 weekly)');
 
 export default router;

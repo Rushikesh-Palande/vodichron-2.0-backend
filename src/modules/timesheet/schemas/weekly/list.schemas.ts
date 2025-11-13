@@ -62,7 +62,7 @@ export const checkWeeklyTimesheetExistsSchema = z.object({
   weekStartDate: z.string()
     .min(1, 'Week start date is required')
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Week start date must be in YYYY-MM-DD format'),
-  employeeId: z.string().uuid('Invalid employee ID'),
+  employeeId: z.string().min(1, 'Employee ID is required'), // Accept both UUID and human-readable IDs
 });
 
 /**
@@ -71,7 +71,7 @@ export const checkWeeklyTimesheetExistsSchema = z.object({
  * Validates request for listing an employee's weekly timesheets
  */
 export const listWeeklyTimesheetsSchema = z.object({
-  employeeId: z.string().uuid('Invalid employee ID'),
+  employeeId: z.string().min(1, 'Employee ID is required'), // Accept both UUID and human-readable IDs
   pagination: paginationSchema.optional(),
   filters: weeklyTimesheetFiltersSchema,
 });
@@ -83,7 +83,7 @@ export const listWeeklyTimesheetsSchema = z.object({
  */
 export const getWeeklyTimesheetDetailSchema = z.object({
   timesheetId: z.string().uuid('Invalid timesheet ID'),
-  employeeId: z.string().uuid('Invalid employee ID'),
+  employeeId: z.string().min(1, 'Employee ID is required'), // Accept both UUID and human-readable IDs
 });
 
 /**

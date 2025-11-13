@@ -88,11 +88,11 @@ WeeklyTimesheet.init(
       allowNull: false,
       references: {
         model: 'employees',
-        key: 'uuid',
+        key: 'employeeId',  // References human-readable employeeId (e.g., '0000001', 'EMP1')
       },
       onDelete: 'CASCADE',  // Delete weekly timesheets when employee is deleted.
-      onUpdate: 'CASCADE',  // Update employeeId when employee uuid changes.
-      comment: 'Foreign key referencing the employee',
+      onUpdate: 'CASCADE',  // Update employeeId when employee employeeId changes.
+      comment: 'Foreign key referencing the employee (human-readable ID)',
     },
     // 'requestNumber' field: sequential number for the weekly timesheet request.
     // Used for human-readable identification and tracking.

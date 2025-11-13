@@ -127,7 +127,7 @@ export function getTimesheetRejectedNotificationTemplate(
                           Total Hours:
                         </td>
                         <td style="color: #ef4444; font-size: 14px; font-weight: 600;">
-                          ${totalHours} hours
+                          ${totalHours}
                         </td>
                       </tr>
                       <tr>

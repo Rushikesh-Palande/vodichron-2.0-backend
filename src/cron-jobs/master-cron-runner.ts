@@ -10,6 +10,7 @@
 
 import { startBackupCronJob, stopBackupCronJob, getBackupCronJobStatus } from './database-backup.cron';
 import { startSessionCleanupCronJob, stopSessionCleanupCronJob, getSessionCleanupCronJobStatus } from '../modules/auth/cron/session-cleanup.cron';
+import { startTimesheetSyncCronJob, stopTimesheetSyncCronJob, getTimesheetSyncCronJobStatus } from '../modules/timesheet/cron/timesheet-sync.cron';
 import { logger } from '../utils/logger';
 
 /**
@@ -41,12 +42,20 @@ export async function startAllCronJobs(): Promise<void> {
     logger.info('');
     
     // ========================================================================
+    // Cron Job 3: Timesheet Sync (Daily at 11:59 PM)
+    // ========================================================================
+    logger.info('📋 Step 3: Starting timesheet sync cron job...');
+    startTimesheetSyncCronJob();
+    logger.info('✅ Step 3: Timesheet sync cron job started');
+    logger.info('');
+    
+    // ========================================================================
     // Add more cron jobs here as needed
     // ========================================================================
     // Example:
-    // logger.info('📧 Step 3: Starting email notification cron job...');
+    // logger.info('📧 Step 4: Starting email notification cron job...');
     // startEmailCronJob();
-    // logger.info('✅ Step 3: Email notification cron job started');
+    // logger.info('✅ Step 4: Email notification cron job started');
     // logger.info('');
     
     // ========================================================================
@@ -57,6 +66,7 @@ export async function startAllCronJobs(): Promise<void> {
     logger.info('📋 Active Cron Jobs:');
     logger.info('   1. Database Backup - Every hour (overwrites daily file)');
     logger.info('   2. Session Cleanup - Every 30 minutes (marks expired sessions offline)');
+    logger.info('   3. Timesheet Sync - Every day at 11:59 PM (syncs daily to weekly timesheets)');
     logger.info('');
     
   } catch (error: any) {
@@ -86,6 +96,9 @@ export function stopAllCronJobs(): void {
     // Stop session cleanup cron job
     stopSessionCleanupCronJob();
     
+    // Stop timesheet sync cron job
+    stopTimesheetSyncCronJob();
+    
     // Stop other cron jobs here...
     // stopEmailCronJob();
     
@@ -110,11 +123,12 @@ export function stopAllCronJobs(): void {
 export function getAllCronJobsStatus(): {
   databaseBackup: ReturnType<typeof getBackupCronJobStatus>;
   sessionCleanup: ReturnType<typeof getSessionCleanupCronJobStatus>;
+  timesheetSync: ReturnType<typeof getTimesheetSyncCronJobStatus>;
   // Add more cron job statuses here...
 } {
   return {
     databaseBackup: getBackupCronJobStatus(),
-    sessionCleanup: getSessionCleanupCronJobStatus(),
+    sessionCleanup: getSessionCleanupCronJobStatus(),    timesheetSync: getTimesheetSyncCronJobStatus(),
     // emailNotifications: getEmailCronJobStatus(),
   };
 }
@@ -128,5 +142,8 @@ export {
   getBackupCronJobStatus,
   startSessionCleanupCronJob,
   stopSessionCleanupCronJob,
-  getSessionCleanupCronJobStatus
+  getSessionCleanupCronJobStatus,
+  startTimesheetSyncCronJob,
+  stopTimesheetSyncCronJob,
+  getTimesheetSyncCronJobStatus
 };

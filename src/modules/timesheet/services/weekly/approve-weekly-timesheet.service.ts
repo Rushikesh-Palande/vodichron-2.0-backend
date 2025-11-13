@@ -15,6 +15,7 @@
  */
 
 import { TRPCError } from '@trpc/server';
+import { config } from '../../../../config';
 import moment from 'moment';
 import { logger, logSecurity, PerformanceTimer } from '../../../../utils/logger';
 import { getWeeklyTimesheetDetailsById } from '../../stores/weekly/list.store';
@@ -342,7 +343,7 @@ async function sendApprovalEmailNotification(
   comment?: string
 ): Promise<void> {
   try {
-    const appLink = process.env.UI_HOST || 'http://localhost:3000';
+    const appLink = config.frontendUrl;;
 
     if (approvalStatus === ApprovalStatus.APPROVED) {
       logger.info('📧 Sending approval notification email', {

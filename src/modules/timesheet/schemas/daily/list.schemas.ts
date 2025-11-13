@@ -54,7 +54,7 @@ export const dailyTimesheetListRequestSchema = z.object({
  * Validates request for listing an employee's daily timesheets
  */
 export const listDailyTimesheetsSchema = z.object({
-  employeeId: z.string().uuid('Invalid employee ID'),
+  employeeId: z.string().min(1, 'Employee ID is required'), // Accept both UUID and human-readable IDs
   pagination: paginationSchema.optional(),
   filters: dailyTimesheetFiltersSchema,
 });
@@ -78,7 +78,17 @@ export const checkDailyTimesheetExistsSchema = z.object({
   timesheetDate: z.string()
     .min(1, 'Timesheet date is required')
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Timesheet date must be in YYYY-MM-DD format'),
-  employeeId: z.string().uuid('Invalid employee ID'),
+  employeeId: z.string().min(1, 'Employee ID is required'), // Accept both UUID and human-readable IDs
+});
+
+/**
+ * List Reportee Daily Timesheets Schema
+ * ======================================
+ * Validates request for managers/HR to list reportee daily timesheets
+ */
+export const listReporteeDailyTimesheetsSchema = z.object({
+  pagination: paginationSchema.optional(),
+  filters: dailyTimesheetFiltersSchema,
 });
 
 /**

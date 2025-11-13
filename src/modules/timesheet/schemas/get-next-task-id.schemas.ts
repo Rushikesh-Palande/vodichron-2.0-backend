@@ -12,7 +12,7 @@ import { z } from 'zod';
  * Validates input for getting the next available task ID
  */
 export const getNextTaskIdSchema = z.object({
-  employeeId: z.string().uuid('Invalid employee ID'),
+  employeeId: z.string().min(1, 'Employee ID is required'), // Accept both UUID and human-readable IDs
 });
 
 /**

@@ -25,6 +25,15 @@ export const SESSION_CLEANUP_CONFIG = {
 };
 
 /**
+ * Timesheet Sync Configuration
+ */
+export const TIMESHEET_SYNC_CONFIG = {
+  enabled: true,
+  interval: '1 day',     // Run daily
+  runAt: '11:59 PM',    // Run at 11:59 PM every day
+};
+
+/**
  * General Cron Settings
  */
 export const CRON_SETTINGS = {
@@ -79,6 +88,7 @@ export function getCronSchedule(config: { interval: string; runAt: string | null
  */
 export const DATABASE_BACKUP_SCHEDULE = getCronSchedule(DATABASE_BACKUP_CONFIG);
 export const SESSION_CLEANUP_SCHEDULE = getCronSchedule(SESSION_CLEANUP_CONFIG);
+export const TIMESHEET_SYNC_SCHEDULE = getCronSchedule(TIMESHEET_SYNC_CONFIG);
 
 /**
  * Enable/Disable flags
@@ -86,6 +96,7 @@ export const SESSION_CLEANUP_SCHEDULE = getCronSchedule(SESSION_CLEANUP_CONFIG);
 export const CRON_ENABLED = {
   databaseBackup: DATABASE_BACKUP_CONFIG.enabled,
   sessionCleanup: SESSION_CLEANUP_CONFIG.enabled,
+  timesheetSync: TIMESHEET_SYNC_CONFIG.enabled,
 };
 
 /**
@@ -113,4 +124,7 @@ export const SCHEDULE_DESCRIPTIONS = {
   sessionCleanup: SESSION_CLEANUP_CONFIG.runAt 
     ? `Every day at ${SESSION_CLEANUP_CONFIG.runAt}` 
     : `Every ${SESSION_CLEANUP_CONFIG.interval}`,
+  timesheetSync: TIMESHEET_SYNC_CONFIG.runAt 
+    ? `Every day at ${TIMESHEET_SYNC_CONFIG.runAt}` 
+    : `Every ${TIMESHEET_SYNC_CONFIG.interval}`,
 };

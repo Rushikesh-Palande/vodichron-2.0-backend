@@ -16,7 +16,7 @@ export const updateDailyTimesheetApprovalSchema = z.object({
   approvalStatus: z.enum(['APPROVED', 'REJECTED']),
   comment: z.string().optional(),
   employeeName: z.string(),
-  employeeEmail: z.string().email(),
+  employeeEmail: z.string().email().optional(),
   requestNumber: z.string(),
   totalHours: z.string(),
   timesheetDate: z.string()

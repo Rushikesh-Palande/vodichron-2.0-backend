@@ -64,7 +64,7 @@ export const createDailyTimesheetSchema = z.object({
   // REQUIRED FIELDS
   // ============================================================================
   
-  employeeId: z.string().uuid('Invalid employee ID'),
+  employeeId: z.string().min(1, 'Employee ID is required'), // Accept both UUID and human-readable IDs (e.g., '0000001', 'EMP1')
   
   timesheetDate: z.string()
     .min(1, 'Timesheet date is required')

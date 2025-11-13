@@ -30,6 +30,7 @@ export const getProfileProcedure = protectedProcedure.query(async ({ ctx }) => {
     let employeeName = null;
     let recentPhotograph = null;
     let employeeUuid = null;
+    let employeeId = null;
     if (ctx.user.type === 'employee') {
       // ctx.user.uuid is from application_users table, need to get employeeId first
       const appUser = await User.findOne({ where: { uuid: ctx.user.uuid } });
@@ -56,6 +57,7 @@ export const getProfileProcedure = protectedProcedure.query(async ({ ctx }) => {
         if (employee) {
           employeeName = employee.name;
           recentPhotograph = employee.recentPhotograph;
+          employeeId = employee.employeeId; // Human-readable ID like '0000001' or 'EMP1'
         } else {
           logger.warn('⚠️ Employee record not found for user', {
             userUuid: ctx.user.uuid,
@@ -70,14 +72,15 @@ export const getProfileProcedure = protectedProcedure.query(async ({ ctx }) => {
       }
     }
 
-    // Return user data with employee name, photo, and employee UUID
+    // Return user data with employee name, photo, employee UUID, and employeeId
     return {
       success: true,
       data: {
         ...ctx.user,
         name: employeeName,
         recentPhotograph,
-        employeeUuid
+        employeeUuid,
+        employeeId // Human-readable ID like '0000001' or 'EMP1'
       },
       timestamp: new Date().toISOString()
     };

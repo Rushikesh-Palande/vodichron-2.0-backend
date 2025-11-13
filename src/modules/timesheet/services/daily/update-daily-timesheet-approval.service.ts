@@ -19,6 +19,9 @@ import { updateDailyTimesheetApprovalStatus } from '../../stores/daily/update.st
 import { ApplicationUserRole } from '../../types/timesheet.types';
 import { getTimesheetApprovedNotificationTemplate } from '../../templates/timesheet-approved.template';
 import { getTimesheetRejectedNotificationTemplate } from '../../templates/timesheet-rejected.template';
+import { config } from '../../../../config';
+import { sendEmail } from '../../../../services/email.service';
+import path from 'path';
 
 /**
  * User Context Interface
@@ -47,7 +50,7 @@ interface UpdateApprovalInput {
   approvalStatus: ApprovalStatus;
   comment?: string;
   employeeName: string;
-  employeeEmail: string;
+  employeeEmail?: string;
   requestNumber: string;
   totalHours: string;
   timesheetDate: string;
@@ -155,57 +158,90 @@ export async function updateDailyTimesheetApproval(
     );
 
     // ==========================================================================
-    // STEP 4: Send Email Notification
+    // STEP 4: Send Email Notification (Only if email is provided)
     // ==========================================================================
-    const appLink = process.env.UI_HOST || 'http://localhost:3000';
-    
-    if (input.approvalStatus === ApprovalStatus.APPROVED) {
-      logger.info('📧 Sending approval notification email', {
-        employeeEmail: input.employeeEmail,
-        requestNumber: input.requestNumber
-      });
-
-      const approvedTemplate = getTimesheetApprovedNotificationTemplate({
-        employeeName: input.employeeName,
-        requestNumber: input.requestNumber,
-        totalHours: input.totalHours,
-        weekEndingDate: input.timesheetDate,
-        approverName: user.name || user.email,
-        appLink
-      });
-
-      // TODO: Integrate with email service
-      // await sendEmail(input.employeeEmail, approvedTemplate.template, null, approvedTemplate.subject);
+    if (input.employeeEmail) {
+      const appLink = config.frontendUrl;
       
-      logger.debug('✉️ Approval email prepared', {
-        to: input.employeeEmail,
-        subject: approvedTemplate.subject
-      });
-    }
+      if (input.approvalStatus === ApprovalStatus.APPROVED) {
+        logger.info('📧 Sending approval notification email', {
+          employeeEmail: input.employeeEmail,
+          requestNumber: input.requestNumber
+        });
 
-    if (input.approvalStatus === ApprovalStatus.REJECTED) {
-      logger.info('📧 Sending rejection notification email', {
-        employeeEmail: input.employeeEmail,
-        requestNumber: input.requestNumber,
-        rejectionReason: input.comment
-      });
+        const approvedTemplate = getTimesheetApprovedNotificationTemplate({
+          employeeName: input.employeeName,
+          requestNumber: input.requestNumber,
+          totalHours: input.totalHours,
+          weekEndingDate: input.timesheetDate,
+          approverName: user.name || user.email,
+          appLink
+        });
 
-      const rejectedTemplate = getTimesheetRejectedNotificationTemplate({
-        employeeName: input.employeeName,
-        requestNumber: input.requestNumber,
-        totalHours: input.totalHours,
-        weekEndingDate: input.timesheetDate,
-        approverName: user.name || user.email,
-        rejectionReason: input.comment,
-        appLink
-      });
+        // Send email with logo attachment
+        const logoPath = path.resolve(process.cwd(), config.asset.path, 'Vodichron-logo.png');
+        
+        await sendEmail({
+          to: input.employeeEmail,
+          subject: approvedTemplate.subject,
+          html: approvedTemplate.template,
+          attachments: [
+            {
+              filename: 'vodichron-logo.png',
+              path: logoPath,
+              cid: 'vodichron-logo',
+            },
+          ],
+        });
+        
+        logger.info('✅ Approval email sent successfully', {
+          to: input.employeeEmail,
+          subject: approvedTemplate.subject
+        });
+      }
 
-      // TODO: Integrate with email service
-      // await sendEmail(input.employeeEmail, rejectedTemplate.template, null, rejectedTemplate.subject);
-      
-      logger.debug('✉️ Rejection email prepared', {
-        to: input.employeeEmail,
-        subject: rejectedTemplate.subject
+      if (input.approvalStatus === ApprovalStatus.REJECTED) {
+        logger.info('📧 Sending rejection notification email', {
+          employeeEmail: input.employeeEmail,
+          requestNumber: input.requestNumber,
+          rejectionReason: input.comment
+        });
+
+        const rejectedTemplate = getTimesheetRejectedNotificationTemplate({
+          employeeName: input.employeeName,
+          requestNumber: input.requestNumber,
+          totalHours: input.totalHours,
+          weekEndingDate: input.timesheetDate,
+          approverName: user.name || user.email,
+          rejectionReason: input.comment,
+          appLink
+        });
+
+        // Send email with logo attachment
+        const logoPath = path.resolve(process.cwd(), config.asset.path, 'Vodichron-logo.png');
+        
+        await sendEmail({
+          to: input.employeeEmail,
+          subject: rejectedTemplate.subject,
+          html: rejectedTemplate.template,
+          attachments: [
+            {
+              filename: 'vodichron-logo.png',
+              path: logoPath,
+              cid: 'vodichron-logo',
+            },
+          ],
+        });
+        
+        logger.info('✅ Rejection email sent successfully', {
+          to: input.employeeEmail,
+          subject: rejectedTemplate.subject
+        });
+      }
+    } else {
+      logger.warn('⚠️ Skipping email notification - employee email not provided', {
+        timesheetUuid: input.timesheetUuid,
+        employeeName: input.employeeName
       });
     }
 

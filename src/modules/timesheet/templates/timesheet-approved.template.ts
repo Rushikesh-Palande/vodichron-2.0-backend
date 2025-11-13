@@ -13,6 +13,7 @@ export interface TimesheetApprovedData {
   totalHours: string;
   weekEndingDate: string;
   approverName: string;
+  approverComments?: string;
   appLink: string;
 }
 
@@ -28,7 +29,7 @@ export interface TimesheetApprovedData {
 export function getTimesheetApprovedNotificationTemplate(
   data: TimesheetApprovedData
 ) {
-  const { employeeName, requestNumber, totalHours, weekEndingDate, approverName, appLink } = data;
+  const { employeeName, requestNumber, totalHours, weekEndingDate, approverName, approverComments, appLink } = data;
 
   return {
     subject: `Timesheet Approved #${requestNumber} - Vodichron HRMS`,
@@ -118,7 +119,7 @@ export function getTimesheetApprovedNotificationTemplate(
                           Total Hours:
                         </td>
                         <td style="color: #10b981; font-size: 14px; font-weight: 600;">
-                          ${totalHours} hours
+                          ${totalHours}
                         </td>
                       </tr>
                       <tr>
@@ -141,6 +142,25 @@ export function getTimesheetApprovedNotificationTemplate(
                   </td>
                 </tr>
               </table>
+
+              ${approverComments ? `
+              <!-- Approver Comments -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+                <tr>
+                  <td style="background-color: #ecfdf5; 
+                             border-left: 4px solid #10b981; 
+                             padding: 16px 20px; 
+                             border-radius: 6px;">
+                    <p style="color: #6b7280; font-size: 13px; font-weight: 600; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                      Approver Comment
+                    </p>
+                    <p style="color: #1f2937; font-size: 15px; line-height: 1.6; margin: 0;">
+                      ${approverComments}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
 
               <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin: 24px 0;">
                 Your timesheet has been successfully approved. You can view the complete details by clicking the button below.

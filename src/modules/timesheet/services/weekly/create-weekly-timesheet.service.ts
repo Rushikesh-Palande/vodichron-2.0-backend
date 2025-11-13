@@ -27,6 +27,7 @@ import { generateRequestNumber } from '../../helpers/generate-request-number';
 import { generateTaskId } from '../../helpers/generate-task-id';
 import { getTimesheetSubmittedManagerNotificationTemplate } from '../../templates/timesheet-submitted-manager.template';
 import { getTimesheetSubmittedEmployeeNotificationTemplate } from '../../templates/timesheet-submitted-employee.template';
+import { config } from '../../../../config';
 
 /**
  * User Context Interface
@@ -344,7 +345,7 @@ async function sendTimesheetEmailNotifications(
       requestNumber
     });
 
-    const appLink = process.env.UI_HOST || 'http://localhost:3000';
+    const appLink = config.frontendUrl;
     const mailConfig = {
       employeeName: employee.name,
       requestNumber: requestNumber,

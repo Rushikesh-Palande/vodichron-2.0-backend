@@ -71,6 +71,7 @@ class Timesheet extends Model<TimesheetAttributes, TimesheetCreationAttributes> 
   // Approval Workflow
   public approvalStatus!: 'REQUESTED' | 'APPROVED' | 'REJECTED'; // Current approval status.
   public approverId!: string | null;                        // User ID of the approver.
+  public approverRole!: string | null;                       // Role of the approver.
   public approvalDate!: Date | null;                        // Date when timesheet was approved/rejected.
   public approverComments!: string | null;                  // Comments from the approver.
   
@@ -97,11 +98,11 @@ Timesheet.init(
       allowNull: false,
       references: {
         model: 'employees',
-        key: 'uuid',
+        key: 'employeeId',  // References human-readable employeeId (e.g., '0000001', 'EMP1')
       },
       onDelete: 'CASCADE',  // Delete timesheets when employee is deleted.
-      onUpdate: 'CASCADE',  // Update employeeId when employee uuid changes.
-      comment: 'Foreign key referencing the employee',
+      onUpdate: 'CASCADE',  // Update employeeId when employee employeeId changes.
+      comment: 'Foreign key referencing the employee (human-readable ID)',
     },
     // 'requestNumber' field: sequential number for the timesheet request.
     // Used for human-readable identification and tracking.
@@ -303,6 +304,13 @@ Timesheet.init(
       type: DataTypes.STRING(50),
       allowNull: true,
       comment: 'User ID of the approver',
+    },
+    // 'approverRole' field: role of the approver in approval workflow.
+    // Examples: "Manager", "Director", "Client Approver"
+    approverRole: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: 'Role of the approver',
     },
     // 'approvalDate' field: date when the timesheet was approved/rejected.
     // Null until reviewed.
